@@ -18,55 +18,113 @@
             width: 100%;
             height: 100%;
         }
+
+        #tree > svg > g > text{
+            fill: black;
+        }
     </style>
 </head>
 <body>
 <!--HTML-->
 <script src="https://balkan.app/js/FamilyTree.js"></script>
 <div id="tree"></div>
-  <!-- <script src="https://cdn.jsdelivr.net/npm/familytree.js@7.0.5/dist/familytree.min.js"></script> -->
   <script>
    //JavaScript
-    var options = getOptions();
+    // 家族数据结构示例
+    var familyData = []
+    fetch('./new_family.json').then(response => response.json())
+    .then(data => {
+            console.log('原始数据:', data);
+            
+            // 预处理数据，处理父子关系
+            const processedData = data.map(node => {
+                // 基础节点数据
+                const processedNode = {
+                    id: parseInt(node.id),
+                    name: node.name,
+                    title: node.title || '',
+                    description: node.description || '',
+                    gender: node.gender || 'male',
+                    generation: "第 "+(node.generation || 0) + "代",
+                    // 生成基于名字的头像URL
+                    img: `https://ui-avatars.com/api/?name=${encodeURIComponent(node.name)}&background=random&size=150&font-size=0.5&length=2&color=ffffff`
+                };
+                 // 如果有父亲，设置 pid
+                 if (node.fid) {
+                    processedNode.fid = parseInt(node.fid);
+                }
 
-    var chart = new FamilyTree(document.getElementById("tree"), {
-        mouseScrool: FamilyTree.none,
-        scaleInitial: options.scaleInitial,
-        siblingSeparation: 120,
-        template: 'john',
-        nodeBinding: {
-            field_0: "name",
-            field_1: "title",
-            img_0: "img",
-        }
+                return processedNode;
+            });
+            
+            console.log('处理后的数据:', processedData);
+            
+            var options = getOptions();
+
+            var chart = new FamilyTree(document.getElementById("tree"), {
+                mouseScrool: FamilyTree.action.zoom,
+                scaleInitial: options.scaleInitial,
+                siblingSeparation: 80,
+                levelSeparation: 120,
+                template: "john",
+                editForm: {
+                    buttons: {
+                        edit: null,
+                        share: null,
+                        pdf: {
+                            icon: FamilyTree.icon.pdf(24, 24, '#fff'),
+                            text: 'Save as PDF'
+                        }
+                    }
+                },
+                nodeBinding: {
+                    field_0: "title",
+                    field_1: "generation",
+                    img_0: "img",
+                },
+                maxDepth: 5,
+                orientation: FamilyTree.orientation.top,
+                orderBy: "generation",
+                tags: {
+                    color: '#757575',
+                    stroke: '#757575',
+                    strokeWidth: 2,
+                },  
+                padding: 30,
+                zoom: {
+                    speed: 130,
+                    smooth: 10
+                }
+            });
+
+            // 修改模板中的文本位置
+            FamilyTree.templates.john.field_0 = 
+                '<text class="field_0" style="font-size: 18px;" fill="#000000" x="125" y="145" text-anchor="middle">{val}</text>';
+            FamilyTree.templates.john.field_1 = 
+                '<text class="field_1" style="font-size: 14px;" fill="#666666" x="125" y="125" text-anchor="middle">{val}</text>';
+
+            // 在加载后调整文本位置
+            chart.on('redraw', function(sender) {
+                setTimeout(() => {
+                    const texts = document.querySelectorAll('#tree > svg > g > text');
+                    texts.forEach(text => {
+                        if (text.getAttribute('data-width') === "230") {
+                            text.setAttribute('y', '145');
+                        } else if (text.getAttribute('data-width') === "150") {
+                            text.setAttribute('y', '165');
+                        }
+                    });
+                }, 100);
+            });
+
+            chart.load(processedData);
+
+    })
+    .catch(error => {
+        console.error('错误详情:', error);
+        alert('加载家谱数据时发生错误，请检查控制台获取详细信息');
     });
 
-
-    chart.load([
-        { id: 1, pids: [2], name: "King George VI", img: "https://cdn.balkan.app/shared/f1.png", gender: 'male' },
-        { id: 2, pids: [1], name: "Queen Elizabeth", title: "The Queen Mother", img: "https://cdn.balkan.app/shared/f2.png", gender: 'female' },
-
-        { id: 3, pids: [4], mid: 2, fid: 1, name: "Queen Elizabeth II", img: "https://cdn.balkan.app/shared/f5.png", gender: 'female' },
-        { id: 4, pids: [3], name: "Prince Philip", title: "Duke of Edinburgh", img: "https://cdn.balkan.app/shared/f3.png", gender: 'male' },
-
-        { id: 5, mid: 2, fid: 1, name: "Princess Margaret", img: "https://cdn.balkan.app/shared/f6.png", gender: 'male' },
-
-        { id: 6, mid: 3, fid: 4, pids: [7,8], name: "Charles", title: "Prince of Wales", img: "https://cdn.balkan.app/shared/f8.png", gender: 'male' },
-        { id: 7, pids: [6], name: "Diana", title: "Princess of Wales", img: "https://cdn.balkan.app/shared/f9.png", gender: 'female' },
-        { id: 8, pids: [6], name: "Camila", title: "Duchess of Cornwall", img: "https://cdn.balkan.app/shared/f7.png", gender: 'female' },
-
-        { id: 9,  mid: 3, fid: 4, name: "Anne", title: "Princess Royal", img: "https://cdn.balkan.app/shared/f10.png", gender: 'female' },
-        { id: 10,  mid: 3, fid: 4, name: "Prince Andrew", title: "Duke of York", img: "https://cdn.balkan.app/shared/f11.png", gender: 'male' },
-        { id: 11,  mid: 3, fid: 4, name: "Prince Edward", title: "Earl of Wessex", img: "https://cdn.balkan.app/shared/f12.png", gender: 'male' },
-
-        { id: 12, fid: 6, mid: 7, pids: [14], name: "Prince William", title: "Duch of Cambridge", img: "https://cdn.balkan.app/shared/f14.png", gender: 'male' },
-        { id: 13, fid: 6, mid: 7, pids: [15], name: "Prince Harry", img: "https://cdn.balkan.app/shared/f15.png", gender: 'male' },
-        { id: 14, pids: [12], name: "Catherine", title: "Duchess of Cambridge", img: "https://cdn.balkan.app/shared/f13.png", gender: 'female' },
-        { id: 15, pids: [13], name: "Meghan Markle", img: "https://cdn.balkan.app/shared/f16.png", gender: 'female' },
-        { id: 16, fid: 12, mid: 14, name: "Prince George", img: "https://cdn.balkan.app/shared/f17.png", gender: 'male' },
-        { id: 17, fid: 12, mid: 14, name: "Prince Charlotte", img: "https://cdn.balkan.app/shared/f18.png", gender: 'female' },
-        { id: 18, fid: 12, mid: 14, name: "Prince Louis", img: "https://cdn.balkan.app/shared/f19.png", gender: 'male' }
-    ]);
 
     function getOptions(){
         const searchParams = new URLSearchParams(window.location.search);
