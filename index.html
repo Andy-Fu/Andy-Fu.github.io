@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>家族关系表</title>
+    <title>傅氏家族图</title>
     <style>
         /*CSS*/
         html, body {
@@ -34,7 +34,7 @@
     var familyData = []
     fetch('./new_family.json').then(response => response.json())
     .then(data => {
-            console.log('原始数据:', data);
+            // console.log('原始数据:', data);
             
             // 预处理数据，处理父子关系
             const processedData = data.map(node => {
@@ -43,6 +43,8 @@
                     id: parseInt(node.id),
                     name: node.name,
                     title: node.title || '',
+                    birthday: node.birthday || '',
+                    deathday: node.deathday || '',
                     description: node.description || '',
                     gender: node.gender || 'male',
                     generation: "第 "+(node.generation || 0) + "代",
@@ -57,7 +59,7 @@
                 return processedNode;
             });
             
-            console.log('处理后的数据:', processedData);
+            // console.log('处理后的数据:', processedData);
             
             var options = getOptions();
             FamilyTree.elements.myTextArea = function (data, editElement, minWidth, readOnly) {
@@ -145,6 +147,8 @@
                     elements: [
                         { type: 'textbox', label: '姓名', binding: 'name' },
                         { type: 'textbox', label: '字号', binding: 'title' },
+                        { type: 'textbox', label: '生辰', binding: 'birthday' },
+                        { type: 'textbox', label: '卒日', binding: 'deathday' },
                         { type: 'textbox', label: '代数', binding: 'generation' },
                         { type: 'myTextArea', label: '简介', binding: 'description'},
                         { type: 'select', 
