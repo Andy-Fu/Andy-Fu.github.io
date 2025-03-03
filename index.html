@@ -60,20 +60,109 @@
             console.log('处理后的数据:', processedData);
             
             var options = getOptions();
+            FamilyTree.elements.myTextArea = function (data, editElement, minWidth, readOnly) {
+                var id = FamilyTree.elements.generateId();
+                var value = data[editElement.binding];
+                if (value == undefined) value = '';
+                if (readOnly && !value) {
+                    return {
+                        html: ''
+                    };
+                }
+                var rOnlyAttr = readOnly ? 'readonly' : '';
+                var rDisabledAttr = readOnly ? 'disabled' : '';
+                return {
+                    html: `<div class="bft-form-field" style="min-width: 280px;">
+                                <div class="bft-input" data-bft-input-disabled="">
+                                    <lable for="${id}" style="color:#acacac;padding-left: 10px;">${editElement.label}</lable>
+                                </div>
+                           </div>
+                           <textarea ${rDisabledAttr} ${rOnlyAttr} 
+                                        id="${id}" 
+                                        name="${id}" 
+                                        data-binding="${editElement.binding}"
+                                        style="
+                                            margin-left: 12px;
+                                            width: 100%;
+                                            display: block;
+                                            min-height: 150px;
+                                            padding: 12px;
+                                            border: 1px solid #e0e0e0;
+                                            border-radius: 6px;
+                                            background-color: #fafafa;
+                                            font-family: inherit;
+                                            font-size: 14px;
+                                            line-height: 1.6;
+                                            color: #333;
+                                            resize: none;
+                                            box-sizing: border-box;
+                                            outline: none;
+                                            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+                                    ">${value}
+                            </textarea>
+                        `,
+                    id: id,
+                    value: value
+                };
+            };
+
+            // 添加额外的CSS样式
+            const style = document.createElement('style');
+            style.textContent = `
+
+                /* 自定义滚动条样式 */
+                textarea::-webkit-scrollbar {
+                    width: 6px!important;
+                }
+                
+                textarea::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 4px!important;
+                }
+                
+                textarea::-webkit-scrollbar-thumb {
+                    background: #ddd;
+                    border-radius: 4px!important;
+                }
+                
+                textarea::-webkit-scrollbar-thumb:hover {
+                    background: #ccc;
+                }
+            `;
+            document.head.appendChild(style);
 
             var chart = new FamilyTree(document.getElementById("tree"), {
                 mouseScrool: FamilyTree.action.zoom,
+                nodeMouseClick: FamilyTree.action.details,
                 scaleInitial: options.scaleInitial,
                 siblingSeparation: 80,
                 levelSeparation: 120,
                 template: "john",
                 editForm: {
+                    readOnly: true,
+                    generateElementsFromFields: false,
+                    addMore: false,
+                    elements: [
+                        { type: 'textbox', label: '姓名', binding: 'name' },
+                        { type: 'textbox', label: '字号', binding: 'title' },
+                        { type: 'textbox', label: '代数', binding: 'generation' },
+                        { type: 'myTextArea', label: '简介', binding: 'description'},
+                        { type: 'select', 
+                          label: '性别', 
+                          binding: 'gender',
+                          options: [
+                            { value: 'male', text: '男' },
+                            { value: 'female', text: '女' }
+                          ]
+                        }
+                    ],
                     buttons: {
                         edit: null,
                         share: null,
+                        remove: null,
                         pdf: {
                             icon: FamilyTree.icon.pdf(24, 24, '#fff'),
-                            text: 'Save as PDF'
+                            text: '导出PDF'
                         }
                     }
                 },
@@ -97,13 +186,18 @@
                 }
             });
 
-            // 修改模板中的文本位置
+            chart.on('click', function(sender, args){
+                if (args.node) {
+                    chart.editUI.show(args.node.id,true);
+                }
+                return false;
+            });
+
             FamilyTree.templates.john.field_0 = 
                 '<text class="field_0" style="font-size: 18px;" fill="#000000" x="125" y="145" text-anchor="middle">{val}</text>';
             FamilyTree.templates.john.field_1 = 
                 '<text class="field_1" style="font-size: 14px;" fill="#666666" x="125" y="125" text-anchor="middle">{val}</text>';
 
-            // 在加载后调整文本位置
             chart.on('redraw', function(sender) {
                 setTimeout(() => {
                     const texts = document.querySelectorAll('#tree > svg > g > text');
@@ -118,6 +212,19 @@
             });
 
             chart.load(processedData);
+
+            // 自定义表单标题
+            chart.editUI.on('show', function(sender, args){
+                setTimeout(() => {
+                    var modal = document.querySelector('.bft-edit-form');
+                    if (modal) {
+                        var titleDiv = modal.querySelector('.bft-edit-form-title');
+                        if (titleDiv) {
+                            titleDiv.textContent = '个人详情';
+                        }
+                    }
+                }, 100);
+            });
 
     })
     .catch(error => {
