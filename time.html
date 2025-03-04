@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>周期值日历查看器</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            align-items: center;
+        }
+
+        #inputDate {
+            padding: 8px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+
+        .calendar-table th {
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+        }
+
+        .calendar-table td {
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            position: relative;
+        }
+
+        .date-header {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .today {
+            background-color: #e3f2fd !important;
+            position: relative;
+        }
+
+        .today::after {
+            content: "★";
+            color: #ff6b6b;
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 12px;
+        }
+
+        .base-day {
+            background-color: #ffeaea !important;
+        }
+
+        .weekend {
+            color: #dc3545;
+        }
+
+        .index-value {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+
+        .future .status-dot { background-color: #28a745; }
+        .past .status-dot { background-color: #ffc107; }
+        .current .status-dot { background-color: #007bff; }
+
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            border-radius: 4px;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-today {
+            position: relative;
+            background-color: #e3f2fd;
+        }
+
+        .legend-today::after {
+            content: "★";
+            color: #ff6b6b;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 12px;
+        }
+
+        .legend-base {
+            background-color: #ffeaea;
+        }
+
+        .legend-weekend {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .nav-buttons button {
+            flex: 1;
+            max-width: 150px;
+        }
+
+        .current-period {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 1.2em;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>周期值日历查看器</h1>
+        
+        <div class="controls">
+            <input type="date" id="inputDate" value="2025-03-01">
+        </div>
+
+        <div class="nav-buttons">
+            <button onclick="navigateCalendar(-15)">上一页</button>
+            <button onclick="navigateCalendar(15)">下一页</button>
+        </div>
+
+        <div class="current-period" id="currentPeriod"></div>
+
+        <div id="calendarContainer"></div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #28a745;"></div>
+                <span>未来日期</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffc107;"></div>
+                <span>过去日期</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #007bff;"></div>
+                <span>当前选中</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-base"></div>
+                <span>基准日 (2025-03-01)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-today"></div>
+                <span>今日标记</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-weekend">周末</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_DATE = new Date('2025-03-01');
+        const VALUES = ['机动', 'a1', 'a2', 'a3', 'a电', '帮', '大', '小', '休1', '休2'];
+        const TODAY = new Date();
+
+        function calculateCycleDays(date) {
+            const timeDiff = date.getTime() - BASE_DATE.getTime();
+            const dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+            return dayDiff;
+        }
+
+        function getValueForDate(date) {
+            const dayDiff = calculateCycleDays(date);
+            // 对于负数天数，我们需要特殊处理以保持正确的循环
+            const adjustedIndex = ((dayDiff % 10) + 10) % 10;
+            return {
+                index: adjustedIndex,
+                value: VALUES[adjustedIndex]
+            };
+        }
+
+        function navigateCalendar(days) {
+            const currentDate = new Date(document.getElementById('inputDate').value);
+            currentDate.setDate(currentDate.getDate() + days);
+            document.getElementById('inputDate').value = currentDate.toISOString().split('T')[0];
+            generateCalendar();
+        }
+
+        function generateCalendar() {
+            const selectedDate = new Date(document.getElementById('inputDate').value);
+            const container = document.getElementById('calendarContainer');
+            container.innerHTML = '';
+
+            // 更新当前周期信息
+            updateCurrentPeriod(selectedDate);
+
+            const table = document.createElement('table');
+            table.className = 'calendar-table';
+
+            // 创建表头
+            const header = `
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>星期</th>
+                        <th>状态</th>
+                        <th>周期天数</th>
+                        <th>对应值</th>
+                        <th>索引</th>
+                    </tr>
+                </thead>
+            `;
+            table.innerHTML = header;
+
+            const tbody = document.createElement('tbody');
+            table.appendChild(tbody);
+
+            // 生成前后各7天（共15天）
+            for(let offset = -7; offset <= 7; offset++) {
+                const currentDate = new Date(selectedDate);
+                currentDate.setDate(currentDate.getDate() + offset);
+                
+                const row = document.createElement('tr');
+                const isToday = isSameDay(currentDate, TODAY);
+                const isBaseDay = isSameDay(currentDate, BASE_DATE);
+                const isWeekendDay = isWeekend(currentDate);
+                const isPast = currentDate < TODAY && !isToday;
+
+                // 日期状态分类
+                if (offset === 0) row.classList.add('current');
+                else if (currentDate > TODAY) row.classList.add('future');
+                else row.classList.add('past');
+
+                if (isToday) row.classList.add('today');
+                if (isBaseDay) row.classList.add('base-day');
+                if (isWeekendDay) row.classList.add('weekend');
+
+                // 获取周期值
+                const cycleInfo = getValueForDate(currentDate);
+
+                // 构建单元格
+                row.innerHTML = `
+                    <td>
+                        <div class="date-header">${formatDate(currentDate)}</div>
+                        <div class="index-value">${getChineseDate(currentDate)}</div>
+                    </td>
+                    <td>${getWeekday(currentDate)}</td>
+                    <td>
+                        <div class="status-dot"></div>
+                        ${getDateStatus(currentDate, selectedDate)}
+                    </td>
+                    <td>${calculateCycleDays(currentDate)}</td>
+                    <td><strong>${cycleInfo.value}</strong></td>
+                    <td>${cycleInfo.index}</td>
+                `;
+
+                tbody.appendChild(row);
+            }
+
+            container.appendChild(table);
+        }
+
+        function updateCurrentPeriod(selectedDate) {
+            const cycleInfo = getValueForDate(selectedDate);
+            const periodElement = document.getElementById('currentPeriod');
+            periodElement.textContent = `当前选择日期: ${formatDate(selectedDate)} - ${cycleInfo.value}`;
+        }
+
+        // 日期差计算（支持跨年）
+        function dateDiffInDays(startDate, endDate) {
+            const utc1 = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            const utc2 = Date.UTC(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+            return Math.floor((utc2 - utc1) / (1000 * 3600 * 24));
+        }
+
+        // 日期格式化辅助函数
+        function formatDate(date) {
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+
+        // 获取中文星期
+        function getWeekday(date) {
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            return `星期${weekdays[date.getDay()]}`;
+        }
+
+        // 判断周末
+        function isWeekend(date) {
+            return date.getDay() === 0 || date.getDay() === 6;
+        }
+
+        // 判断同一天
+        function isSameDay(d1, d2) {
+            return d1.getFullYear() === d2.getFullYear() &&
+                   d1.getMonth() === d2.getMonth() &&
+                   d1.getDate() === d2.getDate();
+        }
+
+        // 获取农历信息（示例实现）
+        function getChineseDate(date) {
+            // 实际项目需接入农历库，此处为示例
+            const lunarMonths = ['正月','二月','三月','四月','五月','六月',
+                               '七月','八月','九月','十月','冬月','腊月'];
+            const lunarDays = ['初一','初二','初三','初四','初五','初六','初七',
+                             '初八','初九','初十','十一','十二','十三','十四',
+                             '十五','十六','十七','十八','十九','二十','廿一',
+                             '廿二','廿三','廿四','廿五','廿六','廿七','廿八',
+                             '廿九','三十'];
+            return `${lunarMonths[date.getMonth()]}${lunarDays[date.getDate()-1]}`;
+        }
+
+        // 获取日期状态描述
+        function getDateStatus(date, selectedDate) {
+            if (isSameDay(date, selectedDate)) return '当前选择';
+            if (isSameDay(date, TODAY)) return '今日';
+            if (date < TODAY) return '已过';
+            return '即将到来';
+        }
+
+        // 初始化
+        window.onload = () => {
+            document.getElementById('inputDate').addEventListener('change', function() {
+                generateCalendar();
+            });
+            generateCalendar();
+        };
+    </script>
+</body>
+</html>
