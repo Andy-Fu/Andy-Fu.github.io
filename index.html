@@ -27,6 +27,7 @@
 <body>
 <!--HTML-->
 <script src="https://balkan.app/js/FamilyTree.js"></script>
+<a id="downloadLink" style="display:none;">Download PNG</a>
 <div id="tree"></div>
   <script>
    //JavaScript
@@ -43,7 +44,8 @@
     * @param y {Number} 文本绘制y方向坐标
     * @return {*}
     */
-    function textToImage(text, backgroundColor) {
+    function textToImage(id,text, backgroundColor) {
+        console.log(id,text, backgroundColor);
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = 150;
@@ -59,8 +61,7 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text.slice(0, 4), canvas.width/2, canvas.height/2);
-
-        return canvas.toDataURL();
+        return canvas.toDataURL;
     }
 
     // 家族数据结构示例
@@ -97,11 +98,14 @@
 
             // 预处理数据，处理父子关系
             const processedData = data.map(node => {
+
                 const backgroundColor = getGenerationColor(node.generation);
+
+                // const imgInfo = textToImage(node.id,node.name, backgroundColor)
+
                 return {
                     ...node,
-                    generation: "第" + node.generation + "代",
-                    img: textToImage(node.name, backgroundColor)
+                    generation: "第" + node.generation + "代"
                 };
             });
             
