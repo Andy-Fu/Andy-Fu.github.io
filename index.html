@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>傅氏家族图</title>
+    <title>家族关系表</title>
     <style>
         /*CSS*/
         html, body {
@@ -30,33 +30,79 @@
 <div id="tree"></div>
   <script>
    //JavaScript
+       /**
+    * @description: 文字生成图片
+    * @param text {String} 图片的文本内容
+    * @param imgW {Number} 图片的宽度
+    * @param imgH {Number} 图片的高度
+    * @param bgColor {String} 图片的背景颜色
+    * @param fontSize {Number} 字体大小
+    * @param fontFamily {String} 字体风格
+    * @param fontColor {String} 字体颜色
+    * @param x {Number} 文本绘制x方向坐标
+    * @param y {Number} 文本绘制y方向坐标
+    * @return {*}
+    */
+    function textToImage(text, backgroundColor) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 150;
+        canvas.height = 150;
+
+        // 设置背景色
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 设置文字样式
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 60px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text.slice(0, 4), canvas.width/2, canvas.height/2);
+
+        return canvas.toDataURL();
+    }
+
     // 家族数据结构示例
     var familyData = []
     fetch('./new_family.json').then(response => response.json())
     .then(data => {
             // console.log('原始数据:', data);
             
-            // 预处理数据，处理父子关系
-            const processedData = data.map(node => {
-                // 基础节点数据
-                const processedNode = {
-                    id: parseInt(node.id),
-                    name: node.name,
-                    title: node.title || '',
-                    birthday: node.birthday || '',
-                    deathday: node.deathday || '',
-                    description: node.description || '',
-                    gender: node.gender || 'male',
-                    generation: "第 "+(node.generation || 0) + "代",
-                    // 生成基于名字的头像URL
-                    img: `https://ui-avatars.com/api/?name=${encodeURIComponent(node.name)}&background=random&size=150&font-size=0.5&length=2&color=ffffff`
-                };
-                 // 如果有父亲，设置 pid
-                 if (node.fid) {
-                    processedNode.fid = parseInt(node.fid);
+            // 添加一个颜色缓存对象，用于存储每代的颜色
+            const generationColorCache = {};
+
+            function getGenerationColor(generation) {
+                // 如果这一代已经有分配的颜色，直接返回
+                if (generationColorCache[generation]) {
+                    return generationColorCache[generation];
                 }
 
-                return processedNode;
+                // 生成更亮的颜色
+                const randomColor = generateRandomColor();
+                
+                // 缓存这一代的颜色
+                generationColorCache[generation] = randomColor;
+                
+                return randomColor;
+            }
+
+            // 生成更亮的颜色
+            function generateRandomColor() {
+                const r = Math.floor(Math.random() * 128) + 50; // 50-178
+                const g = Math.floor(Math.random() * 128) + 50; // 50-178
+                const b = Math.floor(Math.random() * 128) + 50; // 50-178
+                return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+            }
+
+            // 预处理数据，处理父子关系
+            const processedData = data.map(node => {
+                const backgroundColor = getGenerationColor(node.generation);
+                return {
+                    ...node,
+                    generation: "第" + node.generation + "代",
+                    img: textToImage(node.name, backgroundColor)
+                };
             });
             
             // console.log('处理后的数据:', processedData);
@@ -137,6 +183,7 @@
                 mouseScrool: FamilyTree.action.zoom,
                 nodeMouseClick: FamilyTree.action.details,
                 scaleInitial: options.scaleInitial,
+                enableSearch: false,
                 siblingSeparation: 80,
                 levelSeparation: 120,
                 template: "john",
@@ -170,6 +217,10 @@
                         }
                     }
                 },
+                menu: {
+                    png: { text: "Export PNG" },
+                    svg: { text: "Export SVG" },
+                },
                 nodeBinding: {
                     field_0: "title",
                     field_1: "generation",
@@ -187,7 +238,8 @@
                 zoom: {
                     speed: 130,
                     smooth: 10
-                }
+                },
+                nodes: processedData
             });
 
             chart.on('click', function(sender, args){
@@ -201,6 +253,9 @@
                 '<text class="field_0" style="font-size: 18px;" fill="#000000" x="125" y="145" text-anchor="middle">{val}</text>';
             FamilyTree.templates.john.field_1 = 
                 '<text class="field_1" style="font-size: 14px;" fill="#666666" x="125" y="125" text-anchor="middle">{val}</text>';
+
+            FamilyTree.templates.john.img_0 = 
+                '<image preserveAspectRatio="xMidYMid slice" xlink:href="{val}" x="0" y="0" width="150" height="150"></image>';
 
             chart.on('redraw', function(sender) {
                 setTimeout(() => {
