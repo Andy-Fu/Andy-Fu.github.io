@@ -196,7 +196,7 @@
                     generateElementsFromFields: false,
                     addMore: false,
                     elements: [
-                        { type: 'textbox', label: '姓名', binding: 'name' },
+                        { type: 'textbox', label: '姓名', binding: 'pinyin' },
                         { type: 'textbox', label: '字号', binding: 'title' },
                         { type: 'textbox', label: '生辰', binding: 'birthday' },
                         { type: 'textbox', label: '卒日', binding: 'deathday' },
@@ -220,10 +220,6 @@
                             text: '导出PDF'
                         }
                     }
-                },
-                menu: {
-                    png: { text: "Export PNG" },
-                    svg: { text: "Export SVG" },
                 },
                 nodeBinding: {
                     field_0: "title",
