@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>傅氏家族关系图</title>
     <style>
         /*CSS*/
@@ -122,7 +123,7 @@
                                 displayName.length === 2 ? 50 : 
                                 displayName.length === 3 ? 40 : 32;
                 // 创建SVG并编码
-                const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" style="background-color: ${backgroundColor};"><text x="75" y="90" font-size="${fontSize}" text-anchor="middle" fill="white" font-family="Arial, sans-serif">${displayName}</text></svg>`;
+                const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" style="background-color: ${backgroundColor};"><text x="75" y="90" font-size="${fontSize}" text-anchor="middle" fill="white" font-family="Arial, sans-serif, 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Heiti TC', sans-serif">${displayName}</text></svg>`;
                 
                 // 使用TextEncoder正确处理UTF-8编码
                 const encoder = new TextEncoder();
