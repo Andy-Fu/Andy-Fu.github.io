@@ -12,19 +12,31 @@
         }
         .input-group {
             margin: 20px 0;
-            padding: 15px;
+            padding: 20px;
             border: 1px solid #ddd;
             border-radius: 5px;
             background-color: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-        input[type="text"] {
+        .input-group .form-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .input-group label {
+            font-weight: bold;
+            min-width: 100px;
+        }
+        .input-group input[type="text"] {
             padding: 8px;
             font-size: 16px;
-            width: 300px;
+            flex: 1;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        button {
+        .input-group button {
             padding: 10px 20px;
             font-size: 16px;
             background-color: #4CAF50;
@@ -32,7 +44,7 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin-left: 10px;
+            align-self: flex-start;
         }
         button:hover {
             background-color: #45a049;
@@ -57,8 +69,18 @@
     <h1>生成扩展区汉字图片</h1>
     
     <div class="input-group">
-        <label for="textInput">输入文字：</label>
-        <input type="text" id="textInput" placeholder="请输入要生成图片的文字" value="𰾫">
+        <div class="form-row">
+            <label for="userIdInput">ID：</label>
+            <input type="text" id="userIdInput" placeholder="请输入用户ID" value="">
+        </div>
+        <div class="form-row">
+            <label for="textInput">输入文字：</label>
+            <input type="text" id="textInput" placeholder="请输入要生成图片的文字" value="𰾫">
+        </div>
+        <div class="form-row">
+            <label for="bgColorInput">背景色：</label>
+            <input type="text" id="bgColorInput" placeholder="留空则随机生成" value="">
+        </div>
         <button onclick="handleGenerate()">生成图片</button>
     </div>
     
@@ -85,9 +107,13 @@
                 alert('请输入文字');
                 return;
             }
-            const id = generateRandomId();
-            const backgroundColor = generateRandomColor();
-            textToImage(id, text, backgroundColor);
+            
+            const userId = document.getElementById('userIdInput').value || generateRandomId();
+            
+            const bgColorInput = document.getElementById('bgColorInput').value;
+            const backgroundColor = bgColorInput || generateRandomColor();
+            
+            textToImage(userId, text, backgroundColor);
         }
         
     /* @description: 文字生成图片
@@ -133,13 +159,19 @@
         output.appendChild(div);
         
         // 自动下载图片
-        const a = document.createElement('a');
-        a.href = imgData;
-        a.download = `${id}_${text.slice(0, 4)}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
+        // 创建下载按钮供用户手动点击下载
+        const downloadBtn = document.createElement('button');
+        downloadBtn.textContent = '下载图片';
+        downloadBtn.style.marginTop = '10px';
+        downloadBtn.onclick = function() {
+            const a = document.createElement('a');
+            a.href = imgData;
+            a.download = `${id}_${text.slice(0, 4)}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+        div.appendChild(downloadBtn);
         return imgData;
     }
     </script>

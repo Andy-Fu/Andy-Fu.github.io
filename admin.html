@@ -5,42 +5,7 @@
     <title>家族成员管理</title>
     <!-- 按需加载 pinyin 库 -->
     <script>
-        // 扩展区汉字图片数据（使用本地文件）
-        const extensionCharImages = {
-            '𰾫': 'img/extension-chars/447254.png'
-        };
 
-        // 扩展区汉字处理函数
-        function isExtensionCharacter(char) {
-            const code = char.charCodeAt(0);
-            // CJK扩展区B: U+20000 - U+2A6DF
-            // CJK扩展区C: U+2A700 - U+2B73F
-            // CJK扩展区D: U+2B740 - U+2B81F
-            // CJK扩展区E: U+2B820 - U+2CEAF
-            // CJK扩展区F: U+2CEB0 - U+2EBEF
-            // CJK扩展区G: U+30000 - U+3134F
-            return (code >= 0x20000 && code <= 0x2A6DF) ||
-                   (code >= 0x2A700 && code <= 0x2B73F) ||
-                   (code >= 0x2B740 && code <= 0x2B81F) ||
-                   (code >= 0x2B820 && code <= 0x2CEAF) ||
-                   (code >= 0x2CEB0 && code <= 0x2EBEF) ||
-                   (code >= 0x30000 && code <= 0x3134F);
-        }
-
-        function replaceExtensionChars(text) {
-            if (!text) return '';
-            let result = '';
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                if (isExtensionCharacter(char) && extensionCharImages[char]) {
-                    // 使用预生成的图片
-                    result += `<img src="${extensionCharImages[char]}" alt="${char}" style="vertical-align: middle; width: 24px; height: 24px; display: inline-block;">`;
-                } else {
-                    result += char;
-                }
-            }
-            return result;
-        }
 
         // 按需加载 pinyin 库
         let pinyinLoaded = false;
@@ -460,9 +425,12 @@
                 <div class="form-group">
                     <label for="fid">父亲</label>
                     <div style="position: relative;">
-                        <input type="text" id="fid-search" placeholder="搜索父亲（输入姓名或ID）" autocomplete="off">
-                        <div id="fid-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                        </div>
+                        <label class="fid-label" style="display: inline-flex; align-items: center; gap: 10px; width: fit-content;">
+                            <img id="fid-img" src="#" alt="" style="display: none;width: 30px; height: 30px; border-radius: 50%; object-fit: cover;"/> 
+                            <input type="text" id="fid-search" placeholder="搜索父亲（输入姓名或ID）" autocomplete="off">
+                            <div id="fid-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            </div>
+                        </label>
                     </div>
                     <input type="hidden" id="fid">
                     <small style="color: #666; display: block; margin-top: 5px;">选择父亲后，代数将自动计算</small>
@@ -476,6 +444,11 @@
                 <div class="form-group">
                     <label for="pinyin">拼音（自动生成）</label>
                     <input type="text" id="pinyin" readonly style="background-color: #f0f0f0;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="img">头像路径（留空自动生成）</label>
+                    <input type="text" id="img" placeholder="例如：img/avatars/1.png">
                 </div>
                 
                 <div class="form-actions">
@@ -653,30 +626,8 @@
             currentEditingId = null;
             document.getElementById('form-title').textContent = '添加成员';
             document.getElementById('member-form').reset();
+            document.getElementById('fid-img').style.display = 'none';
             loadParentOptions();
-            setupAutoCalculation();
-            document.getElementById('edit-form').style.display = 'block';
-        }
-
-        // 打开编辑表单
-        function openEditForm(id) {
-            const member = familyData.find(m => m.id === id);
-            if (!member) return;
-
-            currentEditingId = id;
-            document.getElementById('form-title').textContent = '编辑成员';
-            document.getElementById('member-id').value = member.id;
-            document.getElementById('name').value = member.name;
-            document.getElementById('title').value = member.title || '';
-            document.getElementById('birthday').value = member.birthday || '';
-            document.getElementById('deathday').value = member.deathday || '';
-            document.getElementById('description').value = member.description || '';
-            document.getElementById('gender').value = member.gender;
-            
-            loadParentOptions(member.fid);
-            document.getElementById('generation').value = member.generation;
-            document.getElementById('pinyin').value = member.pinyin || '';
-            
             setupAutoCalculation();
             document.getElementById('edit-form').style.display = 'block';
         }
@@ -688,12 +639,16 @@
                 const form = searchInput.closest('form');
                 const fidInput = form.querySelector('input[name="fid"]');
                 const generationInput = form.querySelector('input[name="generation"]');
-                
+                const fidLabel = form.querySelector('label[class="fid-label"]');
                 // 初始化：如果有选中的父亲，显示在搜索框中
                 if (fidInput.value) {
                     const selectedMember = familyData.find(m => m.id === parseInt(fidInput.value));
                     if (selectedMember) {
-                        searchInput.value = `${selectedMember.name}${selectedMember.title ? ' (' + selectedMember.title + ')' : ''} (第${selectedMember.generation}代, ID:${selectedMember.id})`;
+                        const avatarSrc = selectedMember.img || generateAvatar(selectedMember.name, selectedMember.id);
+                        fidLabel.querySelector('img').src = avatarSrc;
+                        fidLabel.querySelector('img').alt = selectedMember.name;
+                        fidLabel.querySelector('img').style.display = 'inline-flex';
+                        searchInput.value = `${selectedMember.pinyin} ${selectedMember.title ? selectedMember.title : ''} (第${selectedMember.generation}代, ID:${selectedMember.id})`;
                     }
                 }
                 
@@ -745,16 +700,25 @@
             if (maleMembers.length > 0) {
                 maleMembers.forEach(member => {
                     const option = document.createElement('div');
-                    option.textContent = `${member.name}${member.title ? ' (' + member.title + ')' : ''} (第${member.generation}代, ID:${member.id})`;
+
+                    const avatarSrc = member.img || generateAvatar(member.name, member.id);
+                    const img_tag = `<lable style="bottom: -10px;position: relative;align-items: center; gap: 10px;"><img src="${avatarSrc}" alt="${member.name}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;"/> </lable>`;
+                    option.innerHTML = img_tag+`${member.pinyin} ${member.title ? member.title : ''} (第${member.generation}代, ID:${member.id})`;
                     option.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;';
                     option.dataset.id = member.id;
                     option.dataset.generation = member.generation;
                     
                     option.addEventListener('click', function() {
+                        const img_Src = this.querySelector("img").src;
+                        const img_alt= this.querySelector("img").alt;
+                        this.parentElement.parentElement.querySelector('img').style.display = 'inline-flex';
+                        this.parentElement.parentElement.querySelector('img').src = img_Src;
+                        this.parentElement.parentElement.querySelector('img').alt = img_alt;
                         searchInput.value = this.textContent;
                         fidInput.value = this.dataset.id;
                         generationInput.value = parseInt(this.dataset.generation) + 1;
                         dropdown.style.display = 'none';
+                        
                     });
                     
                     option.addEventListener('mouseover', function() {
@@ -777,6 +741,7 @@
             const fidSearch = document.getElementById('fid-search');
             const fidDropdown = document.getElementById('fid-dropdown');
             const fidInput = document.getElementById('fid');
+            const fidImg = document.getElementById('fid-img');
             
             // 清空下拉菜单
             fidDropdown.innerHTML = '';
@@ -798,18 +763,26 @@
             
             function loadMoreMembers() {
                 const membersToLoad = maleMembers.slice(loadedCount, loadedCount + batchSize);
+                const fidImg = document.getElementById('fid-img');
                 membersToLoad.forEach(member => {
                     const option = document.createElement('div');
                     option.className = 'fid-option';
                     option.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;';
-                    option.textContent = `${member.name}${member.title ? ' (' + member.title + ')' : ''} (第${member.generation}代, ID:${member.id})`;
+                    const avatarSrc = member.img || generateAvatar(member.name, member.id);
+                    const img_tag = `<lable style="bottom: -10px;position: relative;align-items: center; gap: 10px;"><img src="${avatarSrc}" alt="${member.name}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;"/> </lable>`;
+                    option.innerHTML = img_tag+`${member.pinyin} ${member.title ? member.title : ''} (第${member.generation}代, ID:${member.id})`;
                     option.dataset.id = member.id;
                     option.dataset.name = member.name;
                     option.dataset.generation = member.generation;
                     
                     option.addEventListener('click', function() {
+                        const option_img_src = this.querySelector("img");
+                        fidImg.src = option_img_src.src;
+                        fidImg.alt = option_img_src.alt;
+                        fidImg.style.display = 'inline-flex';  
+
                         fidInput.value = member.id;
-                        fidSearch.value = `${member.name}${member.title ? ' (' + member.title + ')' : ''} (第${member.generation}代, ID:${member.id})`;
+                        fidSearch.value = `${member.pinyin} ${member.title ? member.title : ''} (第${member.generation}代, ID:${member.id})`;
                         fidDropdown.style.display = 'none';
                         // 触发代数自动计算
                         const event = new Event('change');
@@ -841,14 +814,21 @@
                         const option = document.createElement('div');
                         option.className = 'fid-option';
                         option.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;';
-                        option.textContent = `${member.name}${member.title ? ' (' + member.title + ')' : ''} (第${member.generation}代, ID:${member.id})`;
+                        const avatarSrc = member.img || generateAvatar(member.name, member.id);
+                        const img_tag = `<lable style="bottom: -10px;position: relative;align-items: center; gap: 10px;"><img src="${avatarSrc}" alt="${member.name}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;"/> </lable>`;
+                        option.innerHTML = img_tag+`${member.pinyin} ${member.title ? member.title : ''} (第${member.generation}代, ID:${member.id})`;
                         option.dataset.id = member.id;
                         option.dataset.name = member.name;
                         option.dataset.generation = member.generation;
                         
                         option.addEventListener('click', function() {
+                            const option_img_src = this.querySelector("img");
+                            fidImg.src = option_img_src.src;
+                            fidImg.alt = option_img_src.alt;
+                            fidImg.style.display = 'inline-flex';  
+
                             fidInput.value = member.id;
-                            fidSearch.value = `${member.name}${member.title ? ' (' + member.title + ')' : ''} (第${member.generation}代, ID:${member.id})`;
+                            fidSearch.value = `${member.pinyin} ${member.title ? ' (' + member.title + ')' : ''} (第${member.generation}代, ID:${member.id})`;
                             fidDropdown.style.display = 'none';
                             const event = new Event('change');
                             fidInput.dispatchEvent(event);
@@ -972,7 +952,7 @@
                 generation: parseInt(document.getElementById('generation').value) || 1,
                 fid: parseInt(document.getElementById('fid').value) || null,
                 pinyin: document.getElementById('pinyin').value || '无',
-                img: generateAvatar(document.getElementById('name').value, document.getElementById('gender').value),
+                img: document.getElementById('img').value || generateAvatar(document.getElementById('name').value, parseInt(document.getElementById('member-id').value) || generateNewId()),
                 cids: []
             };
 
@@ -1038,30 +1018,40 @@
         // 根据ID获取成员名字
         function getMemberNameById(id) {
             const member = familyData.find(m => m.id === id);
-            return member ? member.name : null;
+            const avatarSrc = member.img || generateAvatar(member.name, member.id);
+            return member ? `<lable style="bottom: -10px;position: relative;align-items: center; gap: 10px;"><img src="${avatarSrc}" alt="${member.name}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;"/></lable> ` : null;
+        }
+
+        function getMemberNamePinYinById(id) {
+            const member = familyData.find(m => m.id === id);
+            return member ? `<lable style="position: relative;align-items: center; gap: 10px;">${member.pinyin}</lable> ` : null;
         }
 
         // 生成头像
-        function generateAvatar(name, gender) {
-            // 确保名字不为空
-            const safeName = name || '未知';
-            // 使用完整名字（最多4个字符）
-            const displayName = safeName.slice(0, 4);
-            // 根据名字长度调整字体大小
-            const fontSize = displayName.length === 1 ? 60 : 
-                            displayName.length === 2 ? 50 : 
-                            displayName.length === 3 ? 40 : 32;
-            // 基于性别和名字生成颜色
-            const color = generateColor(safeName, gender);
-            // 创建SVG并编码
-            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" style="background-color: ${color};"><text x="75" y="90" font-size="${fontSize}" text-anchor="middle" fill="white" font-family="Arial, sans-serif">${displayName}</text></svg>`;
-            try {
-                return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
-            } catch (e) {
-                console.error('头像生成失败:', e);
-                // 返回一个默认的头像
-                return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogIzk5OTsiPjx0ZXh0IHg9Ijc1IiB5PSI5MCIgZm9udC1zaXplPSI2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+PzwvdGV4dD48L3N2Zz4=';
-            }
+        function generateAvatar(name, id) {
+            // 创建Canvas元素
+            const canvas = document.createElement('canvas');
+            canvas.width = 150;
+            canvas.height = 150;
+            const ctx = canvas.getContext('2d');
+            
+            // 生成随机背景色
+            const backgroundColor = generateColor(name, id);
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 设置文字样式
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '50px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // 绘制名字
+            const displayName = name.length > 2 ? name.substring(0, 2) : name;
+            ctx.fillText(displayName, canvas.width / 2, canvas.height / 2);
+            
+            // 转换为Base64
+            return canvas.toDataURL('image/png');
         }
 
         // 生成颜色
@@ -1128,19 +1118,19 @@
                     // 生成头像
                     const avatar = document.createElement('img');
                     avatar.className = 'member-avatar';
-                    avatar.src = generateAvatar(member.name, member.gender);
+                    avatar.src = member.img || generateAvatar(member.name, member.id);
                     
                     // 成员信息
                     const info = document.createElement('div');
                     info.className = 'member-info';
                     const parentName = member.fid ? getMemberNameById(member.fid) : null;
                     info.innerHTML = `
-                        <strong>${replaceExtensionChars(member.name)}</strong> (${member.gender === 'male' ? '男' : '女'})
+                        <strong>${member.name}</strong> (${member.pinyin}) ${member.gender === 'male' ? '男' : '女'}
                         <br>
                         <small style="color: #666;">
                             成员编号: ${member.id} | 
                             第${member.generation}代
-                            ${parentName ? ` | 父亲: ${replaceExtensionChars(parentName)}(#${member.fid})` : ''}
+                            ${parentName ? ` | 父亲: ${parentName}(#${member.fid})` : ''}
                         </small>
                     `;
                     
@@ -1255,13 +1245,18 @@
                 const member = familyData.find(m => m.id === id);
                 if (!member) return;
 
+                const avatarSrc = member.img || generateAvatar(member.name, member.id);
                 detailArea.innerHTML = `
                     <h3 style="margin-top: 0; color: #4CAF50;">成员详情</h3>
                     <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px;">
                         <div style="font-weight: bold;">ID:</div>
                         <div>${member.id}</div>
                         <div style="font-weight: bold;">姓名:</div>
-                        <div>${member.name}</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <img src="${avatarSrc}" alt="${member.name}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+                        </div>
+                        <div style="font-weight: bold;">拼音:</div>
+                        <div>${member.pinyin || '无'}</div>
                         <div style="font-weight: bold;">字号:</div>
                         <div>${member.title || '无'}</div>
                         <div style="font-weight: bold;">生辰:</div>
@@ -1275,14 +1270,12 @@
                         <div style="font-weight: bold;">代数:</div>
                         <div>第${member.generation}代</div>
                         <div style="font-weight: bold;">父亲:</div>
-                        <div>${member.fid ? getMemberNameById(member.fid) + '(#' + member.fid + ')' : '无'}</div>
+                        <div>${member.fid ? getMemberNameById(member.fid) + getMemberNamePinYinById(member.fid) + '(#' + member.fid + ')' : '无'}</div>
                         <div style="font-weight: bold;">子女:</div>
                         <div>${member.cids && member.cids.length > 0 ? member.cids.map(cid => {
                             const child = familyData.find(m => m.id === cid);
-                            return child ? `${child.name} (ID:${child.id})` : `ID:${cid}`;
+                            return child ? `${getMemberNameById(child.id)}${getMemberNamePinYinById(child.id)} (ID:${child.id})` : `ID:${cid}`;
                         }).join(', ') : '无'}</div>
-                        <div style="font-weight: bold;">拼音:</div>
-                        <div>${member.pinyin || '无'}</div>
                     </div>
                 `;
                 detailArea.style.display = 'block';
@@ -1300,17 +1293,17 @@
             
             const member = familyData.find(m => m.id === id);
             if (!member) return;
-
+            const avatarSrc = member.img || generateAvatar(member.name, member.id);
             detailArea.innerHTML = `
                 <h3 style="margin-top: 0; color: #2196F3;">编辑成员</h3>
                 <form class="inline-edit-form" data-member-id="${id}">
                     <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-bottom: 10px;">
                         <label style="font-weight: bold;">姓名:</label>
-                        <div>
-                            <input type="text" name="name" value="${member.name}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
-                            <div id="name-preview-${id}" style="margin-top: 5px; font-size: 14px; color: #666;">预览: ${replaceExtensionChars(member.name)}</div>
-                        </div>
-                        
+                        <label style="display: inline-flex; align-items: center; gap: 10px; width: fit-content;"><img src="${avatarSrc}" alt="${member.name}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;"/> 
+                        <input type="text" name="name" value="${member.name}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">  
+                        </label>
+                        <label style="font-weight: bold;">拼音:</label>
+                        <input type="text" name="pinyin" value="${member.pinyin || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
                         <label style="font-weight: bold;">字号:</label>
                         <input type="text" name="title" value="${member.title || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
                         
@@ -1333,17 +1326,23 @@
                     <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-bottom: 10px;">
                         <label style="font-weight: bold;">父亲:</label>
                         <div style="position: relative;">
-                            <input type="text" class="fid-search" placeholder="搜索父亲（输入姓名或ID）" autocomplete="off" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
-                            <div class="fid-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; z-index: 9999; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"></div>
+                            <label class="fid-label" style="display: inline-flex; align-items: center; gap: 10px; width: fit-content;">
+                                <img src="#" alt="" style="display: none; width: 30px; height: 30px; border-radius: 50%; object-fit: cover;"/> 
+                                <input type="text" class="fid-search" placeholder="搜索父亲（输入姓名或ID）" autocomplete="off" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                                <div class="fid-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; z-index: 9999; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"></div>
+                                <input type="hidden" name="fid" value="${member.fid || ''}">
+                            </label>
                         </div>
-                        <input type="hidden" name="fid" value="${member.fid || ''}">
+                        
                         <small style="color: #666; display: block; margin-top: 5px; font-size: 12px; grid-column: 2;">选择父亲后，代数将自动计算</small>
                         
                         <label style="font-weight: bold;">代数:</label>
                         <input type="number" name="generation" value="${member.generation}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; background-color: #f0f0f0;" readonly>
                         
-                        <label style="font-weight: bold;">拼音:</label>
-                        <input type="text" name="pinyin" value="${member.pinyin || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                        
+                        
+                        <label style="font-weight: bold;">头像路径:</label>
+                        <input type="text" name="img" value="${member.img || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" placeholder="例如：img/avatars/1.png">
                     </div>
                     
                     <div style="margin-top: 10px;">
@@ -1366,15 +1365,12 @@
                 detailArea.style.display = 'none';
             });
             
-            // 当编辑时修改姓名，自动更新拼音和预览
+            // 当编辑时修改姓名，自动更新拼音
             const nameInput = form.querySelector('input[name="name"]');
             const pinyinInput = form.querySelector('input[name="pinyin"]');
-            const namePreview = document.getElementById(`name-preview-${id}`);
-            if (nameInput && pinyinInput && namePreview) {
+            if (nameInput && pinyinInput) {
                 nameInput.addEventListener('input', function() {
                     const name = this.value;
-                    // 更新预览
-                    namePreview.innerHTML = `预览: ${replaceExtensionChars(name)}`;
                     // 更新拼音
                     if (name) {
                         generatePinyin(name).then(pinyin => {
@@ -1402,7 +1398,7 @@
             member.generation = parseInt(formData.get('generation'));
             member.fid = parseInt(formData.get('fid')) || null;
             member.pinyin = formData.get('pinyin');
-            member.img = generateAvatar(member.name, member.gender);
+            member.img = formData.get('img') || generateAvatar(member.name, member.id);
 
             // 处理父子关系
             if (member.fid) {
@@ -1423,65 +1419,6 @@
             // 重新渲染列表
             renderMemberList();
             showNotification('成员信息已更新', 'success');
-        }
-
-        // 显示成员详情
-        function showMemberDetail(id) {
-            const member = familyData.find(m => m.id === id);
-            if (!member) return;
-
-            const detailContent = document.getElementById('detail-content');
-            detailContent.innerHTML = `
-                <div class="detail-item">
-                    <span class="detail-label">ID:</span>
-                    <span>${member.id}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">姓名:</span>
-                    <span>${replaceExtensionChars(member.name)}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">字号:</span>
-                    <span>${replaceExtensionChars(member.title || '无')}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">生辰:</span>
-                    <span>${replaceExtensionChars(member.birthday || '无')}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">卒日:</span>
-                    <span>${replaceExtensionChars(member.deathday || '无')}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">简介:</span>
-                    <span>${replaceExtensionChars(member.description || '无')}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">性别:</span>
-                    <span>${member.gender === 'male' ? '男' : '女'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">代数:</span>
-                    <span>第${member.generation}代</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">父ID:</span>
-                    <span>${member.fid || '无'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">子女:</span>
-                    <span>${member.cids && member.cids.length > 0 ? member.cids.map(cid => {
-                        const child = familyData.find(m => m.id === cid);
-                        return child ? `${replaceExtensionChars(child.name)} (ID:${child.id})` : `ID:${cid}`;
-                    }).join(', ') : '无'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">拼音:</span>
-                    <span>${member.pinyin || '无'}</span>
-                </div>
-            `;
-
-            document.getElementById('member-detail').style.display = 'block';
         }
 
         // 导出JSON

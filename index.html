@@ -27,7 +27,6 @@
 <body>
 <!--HTML-->
 <script src="FamilyTree.js"></script>
-<a id="downloadLink" style="display:none;">Download PNG</a>
 <div id="tree"></div>
   <script>
    //JavaScript
@@ -96,75 +95,57 @@
                 return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
             }
 
-            // 预处理数据，处理父子关系
-            const processedData = data.map(node => {
-
-                const backgroundColor = getGenerationColor(node.generation);
-
-                // 生成头像
-                const imgData = generateAvatar(node.name, node.gender, backgroundColor);
-
-                return {
-                    ...node,
-                    generation: "第" + node.generation + "代",
-                    img: imgData
-                };
-            });
-
             // 生成头像
-            function generateAvatar(name, gender, backgroundColor) {
-                // 扩展区汉字图片数据（使用本地文件）
-                const extensionCharImages = {
-                    '𰾫': 'img/extension-chars/char_1.png'
-                };
-                
-                const safeName = name || '未知';
-                const displayName = safeName.slice(0, 4);
-                const fontSize = displayName.length === 1 ? 60 : 
-                                displayName.length === 2 ? 50 : 
-                                displayName.length === 3 ? 40 : 32;
-                
-                // 使用Canvas生成头像
+            function generateAvatar(name, id) {
+                // 创建Canvas元素
                 const canvas = document.createElement('canvas');
                 canvas.width = 150;
                 canvas.height = 150;
                 const ctx = canvas.getContext('2d');
                 
-                // 设置背景色
+                // 生成随机背景色
+                const backgroundColor = generateRandomColor();
                 ctx.fillStyle = backgroundColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // 检查是否包含扩展区汉字
-                const hasExtensionChar = displayName.split('').some(char => {
-                    const code = char.charCodeAt(0);
-                    return (code >= 0x20000 && code <= 0x2A6DF) ||
-                           (code >= 0x2A700 && code <= 0x2B73F) ||
-                           (code >= 0x2B740 && code <= 0x2B81F) ||
-                           (code >= 0x2B820 && code <= 0x2CEAF) ||
-                           (code >= 0x2CEB0 && code <= 0x2EBEF) ||
-                           (code >= 0x30000 && code <= 0x3134F);
-                });
+                // 设置文字样式
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '50px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
                 
-                if (hasExtensionChar) {
-                    // 如果包含扩展区汉字，使用预生成的图片
-                    // 这里我们直接使用包含扩展区汉字的名字，因为头像是在电脑端生成的
-                    // 电脑端有支持扩展区汉字的字体，所以Canvas可以正常渲染
-                    ctx.fillStyle = 'white';
-                    ctx.font = `bold ${fontSize}px 'Source Han Sans CN', 'Noto Sans CJK', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Heiti TC', 'STHeiti', 'SimHei', 'Arial Unicode MS', 'Droid Sans Fallback', sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(displayName, canvas.width / 2, canvas.height / 2);
-                } else {
-                    // 正常绘制常用字
-                    ctx.fillStyle = 'white';
-                    ctx.font = `bold ${fontSize}px 'Source Han Sans CN', 'Noto Sans CJK', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Heiti TC', 'STHeiti', 'SimHei', 'Arial Unicode MS', 'Droid Sans Fallback', sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(displayName, canvas.width / 2, canvas.height / 2);
-                }
+                // 绘制名字
+                const displayName = name.length > 2 ? name.substring(0, 2) : name;
+                ctx.fillText(displayName, canvas.width / 2, canvas.height / 2);
                 
-                return canvas.toDataURL();
+                // 转换为Base64
+                return canvas.toDataURL('image/png');
             }
+
+            function getMemberNameById(id) {
+                const member = data.find(m => m.id === id);
+                const avatarSrc = member.img || generateAvatar(member.name, member.id);
+                return member ? `<lable style="bottom: -10px;position: relative;align-items: center; gap: 10px;"><img src="${avatarSrc}" alt="${member.name}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;"/></lable> ` : null;
+            }
+            
+            function getMemberNamePinYinById(id) {
+                const member = data.find(m => m.id === id);
+                return member ? `<lable style="position: relative;align-items: center; gap: 10px;">${member.pinyin}</lable> ` : null;
+            }
+
+            // 预处理数据，处理父子关系
+            const processedData = data.map(node => {
+                let imgValue = node.img;
+                if (!imgValue) {
+                    // 生成默认头像
+                    imgValue = generateAvatar(node.name, node.id);
+                }
+                return {
+                    ...node,
+                    generation: "第" + node.generation + "代",
+                    img: imgValue
+                };
+            });
             
             // console.log('处理后的数据:', processedData);
             
@@ -216,6 +197,31 @@
                 };
             };
             
+            FamilyTree.elements.myNameDisplay = function (data, editElement, minWidth, readOnly) {
+                var id = data["id"];
+                let displayValue = getMemberNameById(id) + getMemberNamePinYinById(id) + `(ID:${id})`;
+                return {
+                    html: `<div class="bft-form-field" style="min-width: 280px;">
+                                <div class="bft-input" data-bft-input-disabled="">
+                                    <label for="${id}" style="color:#acacac; display: block; margin-bottom: 5px;">${editElement.label}</label>
+                                </div>
+                               <div id="${id}_display" data-binding="${editElement.binding}" style="
+                                   width: 100%;
+                                   display: block;
+                                   min-height: 20px;
+                                   margin-top: 35px;
+                                   margin-left: 10px;
+                                   font-family: inherit;
+                                   font-size: 14px;
+                                   color: #333;
+                                   box-sizing: border-box;
+                                   white-space: normal;
+                                   word-wrap: break-word;
+                               ">${displayValue}</div>
+                           </div>`
+                };
+            };
+
             // 自定义父亲显示元素
             FamilyTree.elements.myFatherDisplay = function (data, editElement, minWidth, readOnly) {
                 var fid = data.fid;
@@ -223,12 +229,13 @@
                 if (fid) {
                     var father = processedData.find(m => m.id === fid);
                     if (father) {
-                        displayValue = `${father.name} (ID:${father.id})`;
+                        displayValue = getMemberNameById(fid) + getMemberNamePinYinById(fid) + `(ID:${fid})`;
                     } else {
                         displayValue = `ID:${fid}`;
                     }
                 }
                 var id = FamilyTree.elements.generateId();
+               
                 return {
                     html: `<div class="bft-form-field" style="min-width: 280px;">
                                 <div class="bft-input" data-bft-input-disabled="">
@@ -258,7 +265,7 @@
                 if (cids && cids.length > 0) {
                     displayValue = cids.map(cid => {
                         var child = processedData.find(m => m.id === cid);
-                        return child ? `${child.name} (ID:${child.id})` : `ID:${cid}`;
+                        return child ? getMemberNameById(cid) + getMemberNamePinYinById(cid) + `(ID:${child.id})` : `ID:${cid}`;
                     }).join(', ');
                 }
                 var id = FamilyTree.elements.generateId();
@@ -369,12 +376,12 @@
                     addMore: false,
                     elements: [
                         { type: 'myIdDisplay', label: 'ID', binding: 'id' },
-                        { type: 'textbox', label: '姓名', binding: 'name' },
+                        { type: 'myNameDisplay', label: '姓名', binding: 'name' },
+                        { type: 'textbox', label: '拼音', binding: 'pinyin' },
                         { type: 'textbox', label: '字号', binding: 'title' },
                         { type: 'textbox', label: '生辰', binding: 'birthday' },
                         { type: 'textbox', label: '卒日', binding: 'deathday' },
                         { type: 'textbox', label: '代数', binding: 'generation' },
-                        { type: 'textbox', label: '拼音', binding: 'pinyin' },
                         { type: 'myFatherDisplay', label: '父亲' },
                         { type: 'myChildrenDisplay', label: '子女' },
                         { type: 'myTextArea', label: '简介', binding: 'description'},
