@@ -65,7 +65,8 @@
     "gender": "male",
     "generation": 3,
     "fid": 2,
-    "pinyin": "jī xiāng"
+    "pinyin": "jī xiāng",
+    "cids": []
   },
   {
     "id": 5,
@@ -78,7 +79,8 @@
     "gender": "male",
     "generation": 3,
     "fid": 2,
-    "pinyin": "jī sì"
+    "pinyin": "jī sì",
+    "cids": []
   },
   {
     "id": 6,
@@ -175,7 +177,8 @@
     "gender": "male",
     "generation": 4,
     "fid": 3,
-    "pinyin": "quán bǎi"
+    "pinyin": "quán bǎi",
+    "cids": []
   },
   {
     "id": 12,
@@ -220,7 +223,8 @@
     "gender": "male",
     "generation": 5,
     "fid": 7,
-    "pinyin": "pèi xǐ"
+    "pinyin": "pèi xǐ",
+    "cids": []
   },
   {
     "id": 15,
@@ -233,7 +237,8 @@
     "gender": "male",
     "generation": 5,
     "fid": 7,
-    "pinyin": "pèi qí"
+    "pinyin": "pèi qí",
+    "cids": []
   },
   {
     "id": 16,
@@ -246,7 +251,8 @@
     "gender": "male",
     "generation": 5,
     "fid": 7,
-    "pinyin": "pèi zōng"
+    "pinyin": "pèi zōng",
+    "cids": []
   },
   {
     "id": 17,
@@ -279,7 +285,8 @@
     "gender": "male",
     "generation": 5,
     "fid": 8,
-    "pinyin": "pèi zhāo"
+    "pinyin": "pèi zhāo",
+    "cids": []
   },
   {
     "id": 19,
@@ -292,7 +299,8 @@
     "gender": "male",
     "generation": 5,
     "fid": 9,
-    "pinyin": "pèi lù"
+    "pinyin": "pèi lù",
+    "cids": []
   },
   {
     "id": 20,
@@ -305,7 +313,8 @@
     "gender": "male",
     "generation": 5,
     "fid": 9,
-    "pinyin": "pèi lóng"
+    "pinyin": "pèi lóng",
+    "cids": []
   },
   {
     "id": 21,
@@ -318,7 +327,8 @@
     "gender": "male",
     "generation": 5,
     "fid": 10,
-    "pinyin": "pèi dēng"
+    "pinyin": "pèi dēng",
+    "cids": []
   },
   {
     "id": 22,
@@ -331,7 +341,8 @@
     "gender": "male",
     "generation": 5,
     "fid": 12,
-    "pinyin": "pèi nián"
+    "pinyin": "pèi nián",
+    "cids": []
   },
   {
     "id": 23,
@@ -344,7 +355,8 @@
     "gender": "male",
     "generation": 5,
     "fid": 13,
-    "pinyin": "pèi tài"
+    "pinyin": "pèi tài",
+    "cids": []
   },
   {
     "id": 24,
@@ -393,7 +405,8 @@
     "gender": "male",
     "generation": 6,
     "fid": 17,
-    "pinyin": "bīn xuě"
+    "pinyin": "bīn xuě",
+    "cids": []
   },
   {
     "id": 27,
@@ -406,7 +419,8 @@
     "gender": "male",
     "generation": 6,
     "fid": 17,
-    "pinyin": "bīn yì"
+    "pinyin": "bīn yì",
+    "cids": []
   },
   {
     "id": 28,
@@ -419,7 +433,8 @@
     "gender": "male",
     "generation": 6,
     "fid": 17,
-    "pinyin": "bīn hé"
+    "pinyin": "bīn hé",
+    "cids": []
   },
   {
     "id": 29,
@@ -432,7 +447,8 @@
     "gender": "male",
     "generation": 7,
     "fid": 24,
-    "pinyin": "huáng tiān"
+    "pinyin": "huáng tiān",
+    "cids": []
   },
   {
     "id": 30,
@@ -461,7 +477,8 @@
     "gender": "male",
     "generation": 7,
     "fid": 25,
-    "pinyin": "huáng chéng"
+    "pinyin": "huáng chéng",
+    "cids": []
   },
   {
     "id": 32,
@@ -474,7 +491,8 @@
     "gender": "male",
     "generation": 7,
     "fid": 25,
-    "pinyin": "huáng shèng"
+    "pinyin": "huáng shèng",
+    "cids": []
   },
   {
     "id": 33,
@@ -487,7 +505,8 @@
     "gender": "male",
     "generation": 7,
     "fid": 25,
-    "pinyin": "huáng xīng"
+    "pinyin": "huáng xīng",
+    "cids": []
   },
   {
     "id": 34,
@@ -500,7 +519,8 @@
     "gender": "male",
     "generation": 7,
     "fid": 25,
-    "pinyin": "huáng yuán"
+    "pinyin": "huáng yuán",
+    "cids": []
   },
   {
     "id": 35,
@@ -583,7 +603,8 @@
     "gender": "male",
     "generation": 10,
     "fid": 36,
-    "pinyin": "hóng zhū"
+    "pinyin": "hóng zhū",
+    "cids": []
   },
   {
     "id": 40,
@@ -612,7 +633,8 @@
     "gender": "male",
     "generation": 10,
     "fid": 37,
-    "pinyin": "hóng qiú"
+    "pinyin": "hóng qiú",
+    "cids": []
   },
   {
     "id": 42,
@@ -625,7 +647,8 @@
     "gender": "male",
     "generation": 10,
     "fid": 37,
-    "pinyin": "hóng lín"
+    "pinyin": "hóng lín",
+    "cids": []
   },
   {
     "id": 43,
@@ -674,7 +697,8 @@
     "gender": "male",
     "generation": 11,
     "fid": 38,
-    "pinyin": "liáng guì"
+    "pinyin": "liáng guì",
+    "cids": []
   },
   {
     "id": 46,
@@ -738,7 +762,8 @@
     "gender": "male",
     "generation": 12,
     "fid": 44,
-    "pinyin": "róng qīng"
+    "pinyin": "róng qīng",
+    "cids": []
   },
   {
     "id": 50,
@@ -915,7 +940,8 @@
     "gender": "male",
     "generation": 13,
     "fid": 51,
-    "pinyin": "péi wén"
+    "pinyin": "péi wén",
+    "cids": []
   },
   {
     "id": 61,
@@ -928,7 +954,8 @@
     "gender": "male",
     "generation": 13,
     "fid": 52,
-    "pinyin": "péi hǎi"
+    "pinyin": "péi hǎi",
+    "cids": []
   },
   {
     "id": 62,
@@ -941,7 +968,8 @@
     "gender": "male",
     "generation": 13,
     "fid": 52,
-    "pinyin": "péi jǐn"
+    "pinyin": "péi jǐn",
+    "cids": []
   },
   {
     "id": 63,
@@ -1005,7 +1033,8 @@
     "gender": "male",
     "generation": 14,
     "fid": 55,
-    "pinyin": "jiàn gāng"
+    "pinyin": "jiàn gāng",
+    "cids": []
   },
   {
     "id": 67,
@@ -1018,7 +1047,8 @@
     "gender": "female",
     "generation": 14,
     "fid": 55,
-    "pinyin": "jiàn qín"
+    "pinyin": "jiàn qín",
+    "cids": []
   },
   {
     "id": 68,
@@ -1031,7 +1061,10 @@
     "gender": "male",
     "generation": 14,
     "fid": 56,
-    "pinyin": "jiàn chén"
+    "pinyin": "jiàn chén",
+    "cids": [
+      83
+    ]
   },
   {
     "id": 69,
@@ -1044,7 +1077,8 @@
     "gender": "female",
     "generation": 14,
     "fid": 56,
-    "pinyin": "jiàn yíng"
+    "pinyin": "jiàn yíng",
+    "cids": []
   },
   {
     "id": 70,
@@ -1057,7 +1091,8 @@
     "gender": "male",
     "generation": 14,
     "fid": 57,
-    "pinyin": "jiàn shuài"
+    "pinyin": "jiàn shuài",
+    "cids": []
   },
   {
     "id": 71,
@@ -1070,7 +1105,8 @@
     "gender": "male",
     "generation": 14,
     "fid": 58,
-    "pinyin": "jiàn yì"
+    "pinyin": "jiàn yì",
+    "cids": []
   },
   {
     "id": 72,
@@ -1083,7 +1119,8 @@
     "gender": "male",
     "generation": 14,
     "fid": 59,
-    "pinyin": "jiàn shēn"
+    "pinyin": "jiàn shēn",
+    "cids": []
   },
   {
     "id": 73,
@@ -1130,7 +1167,8 @@
     "gender": "female",
     "generation": 14,
     "fid": 64,
-    "pinyin": "jiàn miáo"
+    "pinyin": "jiàn miáo",
+    "cids": []
   },
   {
     "id": 76,
@@ -1143,7 +1181,8 @@
     "gender": "male",
     "generation": 14,
     "fid": 65,
-    "pinyin": "jiàn chén"
+    "pinyin": "jiàn chén",
+    "cids": []
   },
   {
     "id": 77,
@@ -1156,7 +1195,8 @@
     "gender": "female",
     "generation": 14,
     "fid": 65,
-    "pinyin": "wén xuān"
+    "pinyin": "wén xuān",
+    "cids": []
   },
   {
     "id": 78,
@@ -1169,7 +1209,8 @@
     "gender": "female",
     "generation": 14,
     "fid": 65,
-    "pinyin": "jiàn wén"
+    "pinyin": "jiàn wén",
+    "cids": []
   },
   {
     "id": 79,
@@ -1182,7 +1223,8 @@
     "gender": "male",
     "generation": 15,
     "fid": 73,
-    "pinyin": "hào qiáng"
+    "pinyin": "hào qiáng",
+    "cids": []
   },
   {
     "id": 80,
@@ -1195,7 +1237,8 @@
     "gender": "female",
     "generation": 15,
     "fid": 73,
-    "pinyin": "yuè xī"
+    "pinyin": "yuè xī",
+    "cids": []
   },
   {
     "id": 81,
@@ -1208,7 +1251,8 @@
     "gender": "male",
     "generation": 15,
     "fid": 74,
-    "pinyin": "hào ruì"
+    "pinyin": "hào ruì",
+    "cids": []
   },
   {
     "id": 82,
@@ -1216,11 +1260,26 @@
     "title": "",
     "birthday": "公元二零二零庚子年六月初二日未时",
     "deathday": "",
-    "description": "𰾫鹏子女生於公元二零二零庚子年六月初二日未时",
-    "img": "img/82.png",
+    "description": "𰾫鹏之女生於公元二零二零庚子年六月初二日未时",
+    "img": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogIzQzYzhhYTsiPjx0ZXh0IHg9Ijc1IiB5PSI5MCIgZm9udC1zaXplPSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+5piV6ZuoPC90ZXh0Pjwvc3ZnPg==",
     "gender": "female",
     "generation": 15,
     "fid": 74,
-    "pinyin": "xīn yǔ"
+    "pinyin": "xīn yǔ",
+    "cids": []
+  },
+  {
+    "id": 83,
+    "name": "灵玥",
+    "title": "无",
+    "birthday": "公元二零二五九月二十六13点05分，乙巳年丁亥月戊子日己未时",
+    "deathday": "无",
+    "description": "𰾫臣之女生於公元二零二零庚子年六月初二日未时",
+    "gender": "female",
+    "generation": 15,
+    "fid": 68,
+    "pinyin": "líng yuè",
+    "img": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogIzQ1NDhjODsiPjx0ZXh0IHg9Ijc1IiB5PSI5MCIgZm9udC1zaXplPSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+54G1546lPC90ZXh0Pjwvc3ZnPg==",
+    "cids": []
   }
 ]
