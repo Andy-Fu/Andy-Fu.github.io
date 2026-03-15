@@ -113,25 +113,55 @@
 
             // 生成头像
             function generateAvatar(name, gender, backgroundColor) {
-                // 确保名字不为空
+                // 扩展区汉字图片数据（在电脑端预生成）
+                const extensionCharImages = {
+                    '𰾫': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAedJREFUSEvtlb/LQWEUx79GP8pAWSXFRpLFf2BRDAqbQWyKSQiTUjYxmGRgk1IWEyWDGBQmo8QmRm/n1NWL50a9r+XtfZZ779Nzz/ecz/meexXX6/WKDy7F3xVYr9doNBrI5/NQKpU3iOPxGNvtFqFQCN1uF1arFRaLRRayLCIKRAGCwSDsdjvoWVrFYhGtVgvVapX36V6n0wlFZAUqlQo8Hg+/1O/34XK5QIFjsRhOpxN8Ph/K5TLi8ThUKhXO57NQRChwuVxQq9UwnU6h1Wrh9/sxmUxgMplgNBoZkdPpRCAQwGKx4CRsNhva7fYTLqEA8V+tVvB6vU/sJQGNRgO9Xg+Hw8E9oqREVQgFCEU2m70Fj0ajXMV+v+cKlsslDAYDN5iqSKVS3HTRehI4Ho+YzWacGTUxmUxyZrQnCTSbTSQSCcZBmedyOUQiEaGbngQ2m82tWZLAo02HwyEymcxb8y+sgModDAZ3AQqFAjf5EQX1i1xGFb2FSDpEqL5XQF4Ph8PCIHIOosOyc/AoIE0w2ZMcRg2Wrj+qgAapVCrBbDZDrVaz/39NgHjvdjseoMPhcBuwR4FOp8MTLfpcyCKaz+fo9Xr8YjqdRr1ef+ma0WgEt9t9d+4P/w9e8njzwD+il6A+jugLRxdYyFpzC3IAAAAASUVORK5CYII='
+                };
+                
                 const safeName = name || '未知';
-                // 使用完整名字（最多4个字符）
                 const displayName = safeName.slice(0, 4);
-                // 根据名字长度调整字体大小
                 const fontSize = displayName.length === 1 ? 60 : 
                                 displayName.length === 2 ? 50 : 
                                 displayName.length === 3 ? 40 : 32;
-                // 创建SVG并编码
-                const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" style="background-color: ${backgroundColor};"><text x="75" y="90" font-size="${fontSize}" text-anchor="middle" fill="white" font-family="Arial, sans-serif">${displayName}</text></svg>`;
                 
-                // 使用TextEncoder正确处理UTF-8编码
-                const encoder = new TextEncoder();
-                const data = encoder.encode(svg);
-                let binary = '';
-                for (let i = 0; i < data.length; i++) {
-                    binary += String.fromCharCode(data[i]);
+                // 使用Canvas生成头像
+                const canvas = document.createElement('canvas');
+                canvas.width = 150;
+                canvas.height = 150;
+                const ctx = canvas.getContext('2d');
+                
+                // 设置背景色
+                ctx.fillStyle = backgroundColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 检查是否包含扩展区汉字
+                const hasExtensionChar = displayName.split('').some(char => {
+                    const code = char.charCodeAt(0);
+                    return (code >= 0x20000 && code <= 0x2A6DF) ||
+                           (code >= 0x2A700 && code <= 0x2B73F) ||
+                           (code >= 0x2B740 && code <= 0x2B81F) ||
+                           (code >= 0x2B820 && code <= 0x2CEAF) ||
+                           (code >= 0x2CEB0 && code <= 0x2EBEF) ||
+                           (code >= 0x30000 && code <= 0x3134F);
+                });
+                
+                if (hasExtensionChar) {
+                    // 如果包含扩展区汉字，使用预生成的图片
+                    ctx.fillStyle = 'white';
+                    ctx.font = `bold ${fontSize}px 'Source Han Sans CN', 'Noto Sans CJK', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Heiti TC', 'STHeiti', 'SimHei', 'Arial Unicode MS', 'Droid Sans Fallback', sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(displayName, canvas.width / 2, canvas.height / 2);
+                } else {
+                    // 正常绘制常用字
+                    ctx.fillStyle = 'white';
+                    ctx.font = `bold ${fontSize}px 'Source Han Sans CN', 'Noto Sans CJK', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Heiti TC', 'STHeiti', 'SimHei', 'Arial Unicode MS', 'Droid Sans Fallback', sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(displayName, canvas.width / 2, canvas.height / 2);
                 }
-                return 'data:image/svg+xml;base64,' + btoa(binary);
+                
+                return canvas.toDataURL('image/png');
             }
             
             // console.log('处理后的数据:', processedData);

@@ -5,6 +5,43 @@
     <title>家族成员管理</title>
     <!-- 按需加载 pinyin 库 -->
     <script>
+        // 扩展区汉字图片数据（在电脑端预生成）
+        const extensionCharImages = {
+            '𰾫': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAedJREFUSEvtlb/LQWEUx79GP8pAWSXFRpLFf2BRDAqbQWyKSQiTUjYxmGRgk1IWEyWDGBQmo8QmRm/n1NWL50a9r+XtfZZ779Nzz/ecz/meexXX6/WKDy7F3xVYr9doNBrI5/NQKpU3iOPxGNvtFqFQCN1uF1arFRaLRRayLCIKRAGCwSDsdjvoWVrFYhGtVgvVapX36V6n0wlFZAUqlQo8Hg+/1O/34XK5QIFjsRhOpxN8Ph/K5TLi8ThUKhXO57NQRChwuVxQq9UwnU6h1Wrh9/sxmUxgMplgNBoZkdPpRCAQwGKx4CRsNhva7fYTLqEA8V+tVvB6vU/sJQGNRgO9Xg+Hw8E9oqREVQgFCEU2m70Fj0ajXMV+v+cKlsslDAYDN5iqSKVS3HTRehI4Ho+YzWacGTUxmUxyZrQnCTSbTSQSCcZBmedyOUQiEaGbngQ2m82tWZLAo02HwyEymcxb8y+sgModDAZ3AQqFAjf5EQX1i1xGFb2FSDpEqL5XQF4Ph8PCIHIOosOyc/AoIE0w2ZMcRg2Wrj+qgAapVCrBbDZDrVaz/39NgHjvdjseoMPhcBuwR4FOp8MTLfpcyCKaz+fo9Xr8YjqdRr1ef+ma0WgEt9t9d+4P/w9e8njzwD+il6A+jugLRxdYyFpzC3IAAAAASUVORK5CYII='
+        };
+
+        // 扩展区汉字处理函数
+        function isExtensionCharacter(char) {
+            const code = char.charCodeAt(0);
+            // CJK扩展区B: U+20000 - U+2A6DF
+            // CJK扩展区C: U+2A700 - U+2B73F
+            // CJK扩展区D: U+2B740 - U+2B81F
+            // CJK扩展区E: U+2B820 - U+2CEAF
+            // CJK扩展区F: U+2CEB0 - U+2EBEF
+            // CJK扩展区G: U+30000 - U+3134F
+            return (code >= 0x20000 && code <= 0x2A6DF) ||
+                   (code >= 0x2A700 && code <= 0x2B73F) ||
+                   (code >= 0x2B740 && code <= 0x2B81F) ||
+                   (code >= 0x2B820 && code <= 0x2CEAF) ||
+                   (code >= 0x2CEB0 && code <= 0x2EBEF) ||
+                   (code >= 0x30000 && code <= 0x3134F);
+        }
+
+        function replaceExtensionChars(text) {
+            if (!text) return '';
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (isExtensionCharacter(char) && extensionCharImages[char]) {
+                    // 使用预生成的图片
+                    result += `<img src="${extensionCharImages[char]}" alt="${char}" style="vertical-align: middle; width: 24px; height: 24px; display: inline-block;">`;
+                } else {
+                    result += char;
+                }
+            }
+            return result;
+        }
+
         // 按需加载 pinyin 库
         let pinyinLoaded = false;
         let pinyinLoading = false;
@@ -1098,12 +1135,12 @@
                     info.className = 'member-info';
                     const parentName = member.fid ? getMemberNameById(member.fid) : null;
                     info.innerHTML = `
-                        <strong>${member.name}</strong> (${member.gender === 'male' ? '男' : '女'})
+                        <strong>${replaceExtensionChars(member.name)}</strong> (${member.gender === 'male' ? '男' : '女'})
                         <br>
                         <small style="color: #666;">
                             成员编号: ${member.id} | 
                             第${member.generation}代
-                            ${parentName ? ` | 父亲: ${parentName}(#${member.fid})` : ''}
+                            ${parentName ? ` | 父亲: ${replaceExtensionChars(parentName)}(#${member.fid})` : ''}
                         </small>
                     `;
                     
@@ -1269,7 +1306,10 @@
                 <form class="inline-edit-form" data-member-id="${id}">
                     <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-bottom: 10px;">
                         <label style="font-weight: bold;">姓名:</label>
-                        <input type="text" name="name" value="${member.name}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                        <div>
+                            <input type="text" name="name" value="${member.name}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                            <div id="name-preview-${id}" style="margin-top: 5px; font-size: 14px; color: #666;">预览: ${replaceExtensionChars(member.name)}</div>
+                        </div>
                         
                         <label style="font-weight: bold;">字号:</label>
                         <input type="text" name="title" value="${member.title || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
@@ -1326,12 +1366,16 @@
                 detailArea.style.display = 'none';
             });
             
-            // 当编辑时修改姓名，自动更新拼音
+            // 当编辑时修改姓名，自动更新拼音和预览
             const nameInput = form.querySelector('input[name="name"]');
             const pinyinInput = form.querySelector('input[name="pinyin"]');
-            if (nameInput && pinyinInput) {
+            const namePreview = document.getElementById(`name-preview-${id}`);
+            if (nameInput && pinyinInput && namePreview) {
                 nameInput.addEventListener('input', function() {
                     const name = this.value;
+                    // 更新预览
+                    namePreview.innerHTML = `预览: ${replaceExtensionChars(name)}`;
+                    // 更新拼音
                     if (name) {
                         generatePinyin(name).then(pinyin => {
                             pinyinInput.value = pinyin;
@@ -1394,23 +1438,23 @@
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">姓名:</span>
-                    <span>${member.name}</span>
+                    <span>${replaceExtensionChars(member.name)}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">字号:</span>
-                    <span>${member.title || '无'}</span>
+                    <span>${replaceExtensionChars(member.title || '无')}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">生辰:</span>
-                    <span>${member.birthday || '无'}</span>
+                    <span>${replaceExtensionChars(member.birthday || '无')}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">卒日:</span>
-                    <span>${member.deathday || '无'}</span>
+                    <span>${replaceExtensionChars(member.deathday || '无')}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">简介:</span>
-                    <span>${member.description || '无'}</span>
+                    <span>${replaceExtensionChars(member.description || '无')}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">性别:</span>
@@ -1428,7 +1472,7 @@
                     <span class="detail-label">子女:</span>
                     <span>${member.cids && member.cids.length > 0 ? member.cids.map(cid => {
                         const child = familyData.find(m => m.id === cid);
-                        return child ? `${child.name} (ID:${child.id})` : `ID:${cid}`;
+                        return child ? `${replaceExtensionChars(child.name)} (ID:${child.id})` : `ID:${cid}`;
                     }).join(', ') : '无'}</span>
                 </div>
                 <div class="detail-item">
