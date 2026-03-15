@@ -3,8 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <title>家族成员管理</title>
-    <!-- 引入本地 pinyin 库用于拼音转换，与Node.js后端使用相同的库 (v4.0.0-alpha.2) -->
-    <script src="pinyin.js"></script>
+    <!-- 按需加载 pinyin 库 -->
+    <script>
+        // 按需加载 pinyin 库
+        let pinyinLoaded = false;
+        let pinyinLoading = false;
+        let pinyinLoadPromise = null;
+        
+        function loadPinyinIfNeeded() {
+            if (pinyinLoaded) {
+                return Promise.resolve();
+            }
+            
+            if (pinyinLoading) {
+                return pinyinLoadPromise;
+            }
+            
+            pinyinLoading = true;
+            pinyinLoadPromise = new Promise(function(resolve, reject) {
+                var script = document.createElement('script');
+                script.src = 'pinyin.js';
+                script.onload = function() {
+                    pinyinLoaded = true;
+                    pinyinLoading = false;
+                    resolve();
+                };
+                script.onerror = function() {
+                    pinyinLoading = false;
+                    reject(new Error('Failed to load pinyin.js'));
+                };
+                document.head.appendChild(script);
+            });
+            
+            return pinyinLoadPromise;
+        }
+    </script>
     <style>
         /*CSS*/
         html, body {
@@ -840,7 +873,9 @@
             nameInput.addEventListener('input', function() {
                 const name = this.value;
                 if (name) {
-                    pinyinInput.value = generatePinyin(name);
+                    generatePinyin(name).then(pinyin => {
+                        pinyinInput.value = pinyin;
+                    });
                 } else {
                     pinyinInput.value = '';
                 }
@@ -848,13 +883,16 @@
         }
 
         // 生成拼音（使用 pinyin 库，与Node.js后端保持一致）
-        function generatePinyin(name) {
+        async function generatePinyin(name) {
             if (!name) return '';
             
             // 使用 pinyin 库生成带音标的拼音
             // style: pinyin.STYLE_TONE 表示带音标的拼音（如：mào）
             // segment: false 表示不按词分词，每个字单独转换
             try {
+                // 确保 pinyin 库已加载
+                await loadPinyinIfNeeded();
+                
                 // 尝试不同的导出方式
                 const pinyinFn = pinyin.default || pinyin;
                 const style = pinyin.STYLE_TONE;
@@ -1287,6 +1325,22 @@
             form.querySelector('.btn-cancel-inline').addEventListener('click', function() {
                 detailArea.style.display = 'none';
             });
+            
+            // 当编辑时修改姓名，自动更新拼音
+            const nameInput = form.querySelector('input[name="name"]');
+            const pinyinInput = form.querySelector('input[name="pinyin"]');
+            if (nameInput && pinyinInput) {
+                nameInput.addEventListener('input', function() {
+                    const name = this.value;
+                    if (name) {
+                        generatePinyin(name).then(pinyin => {
+                            pinyinInput.value = pinyin;
+                        });
+                    } else {
+                        pinyinInput.value = '';
+                    }
+                });
+            }
         }
 
         // 保存内联编辑
