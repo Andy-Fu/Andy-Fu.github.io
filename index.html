@@ -115,7 +115,7 @@
             function generateAvatar(name, gender, backgroundColor) {
                 // 扩展区汉字图片数据（使用本地文件）
                 const extensionCharImages = {
-                    '𰾫': 'img/extension-chars/𰾫.png'
+                    '𰾫': 'img/extension-chars/char_1.png'
                 };
                 
                 const safeName = name || '未知';
@@ -163,7 +163,7 @@
                     ctx.fillText(displayName, canvas.width / 2, canvas.height / 2);
                 }
                 
-                return canvas.toDataURL('image/png');
+                return canvas.toDataURL();
             }
             
             // console.log('处理后的数据:', processedData);
