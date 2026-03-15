@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>傅氏家族关系图</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         /*CSS*/
         html, body {
@@ -122,17 +125,27 @@
                 const fontSize = displayName.length === 1 ? 60 : 
                                 displayName.length === 2 ? 50 : 
                                 displayName.length === 3 ? 40 : 32;
-                // 创建SVG并编码
-                const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" style="background-color: ${backgroundColor};"><text x="75" y="90" font-size="${fontSize}" text-anchor="middle" fill="white" font-family="Arial, sans-serif, 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Heiti TC', sans-serif">${displayName}</text></svg>`;
                 
-                // 使用TextEncoder正确处理UTF-8编码
-                const encoder = new TextEncoder();
-                const data = encoder.encode(svg);
-                let binary = '';
-                for (let i = 0; i < data.length; i++) {
-                    binary += String.fromCharCode(data[i]);
-                }
-                return 'data:image/svg+xml;base64,' + btoa(binary);
+                // 使用Canvas生成头像，提高扩展区汉字的兼容性
+                const canvas = document.createElement('canvas');
+                canvas.width = 150;
+                canvas.height = 150;
+                const ctx = canvas.getContext('2d');
+                
+                // 设置背景色
+                ctx.fillStyle = backgroundColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 设置文字样式
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${fontSize}px 'Noto Sans CJK SC', 'Source Han Sans CN', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Heiti TC', 'STHeiti', 'SimHei', 'Arial Unicode MS', 'Droid Sans Fallback', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 绘制文字
+                ctx.fillText(displayName, canvas.width / 2, canvas.height / 2);
+                
+                return canvas.toDataURL('image/png');
             }
             
             // console.log('处理后的数据:', processedData);
