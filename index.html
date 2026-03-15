@@ -26,7 +26,7 @@
 </head>
 <body>
 <!--HTML-->
-<script src="https://balkan.app/js/FamilyTree.js"></script>
+<script src="FamilyTree.js"></script>
 <a id="downloadLink" style="display:none;">Download PNG</a>
 <div id="tree"></div>
   <script>
@@ -101,17 +101,157 @@
 
                 const backgroundColor = getGenerationColor(node.generation);
 
-                // const imgInfo = textToImage(node.id,node.name, backgroundColor)
+                // 生成头像
+                const imgData = generateAvatar(node.name, node.gender, backgroundColor);
 
                 return {
                     ...node,
-                    generation: "第" + node.generation + "代"
+                    generation: "第" + node.generation + "代",
+                    img: imgData
                 };
             });
+
+            // 生成头像
+            function generateAvatar(name, gender, backgroundColor) {
+                // 确保名字不为空
+                const safeName = name || '未知';
+                // 使用完整名字（最多4个字符）
+                const displayName = safeName.slice(0, 4);
+                // 根据名字长度调整字体大小
+                const fontSize = displayName.length === 1 ? 60 : 
+                                displayName.length === 2 ? 50 : 
+                                displayName.length === 3 ? 40 : 32;
+                // 创建SVG并编码
+                const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" style="background-color: ${backgroundColor};"><text x="75" y="90" font-size="${fontSize}" text-anchor="middle" fill="white" font-family="Arial, sans-serif">${displayName}</text></svg>`;
+                
+                // 使用TextEncoder正确处理UTF-8编码
+                const encoder = new TextEncoder();
+                const data = encoder.encode(svg);
+                let binary = '';
+                for (let i = 0; i < data.length; i++) {
+                    binary += String.fromCharCode(data[i]);
+                }
+                return 'data:image/svg+xml;base64,' + btoa(binary);
+            }
             
             // console.log('处理后的数据:', processedData);
             
             var options = getOptions();
+            
+            // 确保FamilyTree对象存在
+            if (typeof FamilyTree === 'undefined') {
+                console.error('FamilyTree library is not loaded');
+                return;
+            }
+            
+            // 确保FamilyTree.elements对象存在
+            if (!FamilyTree.elements) {
+                FamilyTree.elements = {};
+            }
+            
+            // 确保generateId函数存在
+            if (!FamilyTree.elements.generateId) {
+                var idCounter = 0;
+                FamilyTree.elements.generateId = function() {
+                    return 'bft-input-' + (++idCounter);
+                };
+            }
+            
+            // 自定义ID显示元素
+            FamilyTree.elements.myIdDisplay = function (data, editElement, minWidth, readOnly) {
+                var value = data[editElement.binding];
+                if (value == undefined) value = '';
+                var id = FamilyTree.elements.generateId();
+                return {
+                    html: `<div class="bft-form-field" style="min-width: 280px;">
+                                <div class="bft-input" data-bft-input-disabled="">
+                                    <label for="${id}" style="color:#acacac; display: block; margin-bottom: 5px;">${editElement.label}</label>
+                                </div>
+                               <div id="${id}" data-binding="${editElement.binding}" style="
+                                   width: 100%;
+                                   display: block;
+                                   min-height: 20px;
+                                   margin-top: 35px;
+                                   margin-left: 10px;
+                                   font-family: inherit;
+                                   font-size: 14px;
+                                   color: #333;
+                                   box-sizing: border-box;
+                                   white-space: normal;
+                                   word-wrap: break-word;
+                               ">${value}</div>
+                           </div>`
+                };
+            };
+            
+            // 自定义父亲显示元素
+            FamilyTree.elements.myFatherDisplay = function (data, editElement, minWidth, readOnly) {
+                var fid = data.fid;
+                var displayValue = '无';
+                if (fid) {
+                    var father = processedData.find(m => m.id === fid);
+                    if (father) {
+                        displayValue = `${father.name} (ID:${father.id})`;
+                    } else {
+                        displayValue = `ID:${fid}`;
+                    }
+                }
+                var id = FamilyTree.elements.generateId();
+                return {
+                    html: `<div class="bft-form-field" style="min-width: 280px;">
+                                <div class="bft-input" data-bft-input-disabled="">
+                                    <label for="${id}" style="color:#acacac; display: block; margin-bottom: 5px;">${editElement.label}</label>
+                                </div>
+                               <div id="${id}" data-binding="fid" style="
+                                   width: 100%;
+                                   display: block;
+                                   min-height: 20px;
+                                   margin-top: 35px;
+                                   margin-left: 10px;
+                                   font-family: inherit;
+                                   font-size: 14px;
+                                   color: #333;
+                                   box-sizing: border-box;
+                                   white-space: normal;
+                                   word-wrap: break-word;
+                               ">${displayValue}</div>
+                           </div>`
+                };
+            };
+            
+            // 自定义子女显示元素
+            FamilyTree.elements.myChildrenDisplay = function (data, editElement, minWidth, readOnly) {
+                var cids = data.cids;
+                var displayValue = '无';
+                if (cids && cids.length > 0) {
+                    displayValue = cids.map(cid => {
+                        var child = processedData.find(m => m.id === cid);
+                        return child ? `${child.name} (ID:${child.id})` : `ID:${cid}`;
+                    }).join(', ');
+                }
+                var id = FamilyTree.elements.generateId();
+                return {
+                    html: `<div class="bft-form-field" style="min-width: 280px;">
+                                <div class="bft-input" data-bft-input-disabled="">
+                                    <label for="${id}" style="color:#acacac; display: block; margin-bottom: 5px;">${editElement.label}</label>
+                                </div>
+                               <div id="${id}" data-binding="cids" style="
+                                   width: 100%;
+                                   display: block;
+                                   min-height: 20px;
+                                   margin-top: 35px;
+                                   margin-left: 10px;
+                                   font-family: inherit;
+                                   font-size: 14px;
+                                   color: #333;
+                                   box-sizing: border-box;
+                                   white-space: normal;
+                                   word-wrap: break-word;
+                               ">${displayValue}</div>
+                           </div>`
+                };
+            };
+            
             FamilyTree.elements.myTextArea = function (data, editElement, minWidth, readOnly) {
                 var id = FamilyTree.elements.generateId();
                 var value = data[editElement.binding];
@@ -139,17 +279,17 @@
                                             display: block;
                                             min-height: 150px;
                                             padding: 12px;
-                                            border: 1px solid #e0e0e0;
+                                            border: "1px solid #e0e0e0";
                                             border-radius: 6px;
-                                            background-color: #fafafa;
+                                            background-color: "#fafafa";
                                             font-family: inherit;
                                             font-size: 14px;
                                             line-height: 1.6;
-                                            color: #333;
+                                            color: "#333";
                                             resize: none;
                                             box-sizing: border-box;
                                             outline: none;
-                                            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+                                            box-shadow: "inset 0 1px 2px rgba(0,0,0,0.03)";
                                     ">${value}
                             </textarea>
                         `,
@@ -164,21 +304,21 @@
 
                 /* 自定义滚动条样式 */
                 textarea::-webkit-scrollbar {
-                    width: 6px!important;
+                    width: "6px!important";
                 }
                 
                 textarea::-webkit-scrollbar-track {
-                    background: #f1f1f1;
-                    border-radius: 4px!important;
+                    background: "#f1f1f1";
+                    border-radius: "4px!important";
                 }
                 
                 textarea::-webkit-scrollbar-thumb {
-                    background: #ddd;
-                    border-radius: 4px!important;
+                    background: "#ddd";
+                    border-radius: "4px!important";
                 }
                 
                 textarea::-webkit-scrollbar-thumb:hover {
-                    background: #ccc;
+                    background: "#ccc";
                 }
             `;
             document.head.appendChild(style);
@@ -196,11 +336,15 @@
                     generateElementsFromFields: false,
                     addMore: false,
                     elements: [
-                        { type: 'textbox', label: '姓名', binding: 'pinyin' },
+                        { type: 'myIdDisplay', label: 'ID', binding: 'id' },
+                        { type: 'textbox', label: '姓名', binding: 'name' },
                         { type: 'textbox', label: '字号', binding: 'title' },
                         { type: 'textbox', label: '生辰', binding: 'birthday' },
                         { type: 'textbox', label: '卒日', binding: 'deathday' },
                         { type: 'textbox', label: '代数', binding: 'generation' },
+                        { type: 'textbox', label: '拼音', binding: 'pinyin' },
+                        { type: 'myFatherDisplay', label: '父亲' },
+                        { type: 'myChildrenDisplay', label: '子女' },
                         { type: 'myTextArea', label: '简介', binding: 'description'},
                         { type: 'select', 
                           label: '性别', 
