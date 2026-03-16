@@ -1063,7 +1063,8 @@
     "fid": 56,
     "pinyin": "jiàn chén",
     "cids": [
-      83
+      83,
+      84
     ]
   },
   {
@@ -1274,12 +1275,26 @@
     "title": "无",
     "birthday": "公元二零二五九月二十六13点05分，乙巳年丁亥月戊子日己未时",
     "deathday": "无",
-    "description": "𰾫臣之女生於公元二零二五九月二十六13点05分，乙巳年丁亥月戊子日己未时",
+    "description": "𰾫臣之女生於公元二零二零庚子年六月初二日未时",
     "gender": "female",
     "generation": 15,
     "fid": 68,
     "pinyin": "líng yuè",
     "img": "img/avatars/83.png",
+    "cids": []
+  },
+  {
+    "id": 84,
+    "name": "测试",
+    "title": "无",
+    "birthday": "公元二零二五九月二十六13点05分，乙巳年丁亥月戊子日己未时",
+    "deathday": "无",
+    "description": "公元二零二五九月二十六13点05分，乙巳年丁亥月戊子日己未时",
+    "gender": "male",
+    "generation": 15,
+    "fid": 68,
+    "pinyin": "cè shì",
+    "img": "img/avatars/84.png",
     "cids": []
   }
 ]
