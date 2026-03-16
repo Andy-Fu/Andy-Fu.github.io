@@ -12,7 +12,7 @@
         let pinyinLoading = false;
         let pinyinLoadPromise = null;
         
-        function loadPinyinIfNeeded() {
+        function loadPinyinIfNeeded() { 
             if (pinyinLoaded) {
                 return Promise.resolve();
             }
@@ -513,6 +513,11 @@
 
         // 显示通知
         function showNotification(message, type) {
+            // 移除所有现有的通知
+            document.querySelectorAll('[style*="position: fixed; top: 20px; right: 20px;"]').forEach(notification => {
+                notification.remove();
+            });
+            
             const notification = document.createElement('div');
             notification.style.cssText = `
                 position: fixed;
@@ -935,15 +940,35 @@
         }
 
         // 保存成员
-        function saveMember() {
+        async function saveMember() {
             // 数据验证
             if (!validateForm()) {
                 return;
             }
 
+            const memberId = parseInt(document.getElementById('member-id').value) || generateNewId();
+            const name = document.getElementById('name').value;
+            const imgInputValue = document.getElementById('img').value;
+
+            let imgValue = imgInputValue;
+
+            // 如果没有提供 img 值，则生成头像
+            if (!imgValue) {
+                try {
+                    // 生成头像
+                    const avatarDataUrl = generateAvatar(name, memberId);
+                    imgValue = avatarDataUrl;
+                } catch (error) {
+                    console.error('生成头像失败:', error);
+                    showNotification(`头像生成失败: ${error.message}`, 'error');
+                    // 失败时使用空值
+                    imgValue = '';
+                }
+            }
+
             const formData = {
-                id: parseInt(document.getElementById('member-id').value) || generateNewId(),
-                name: document.getElementById('name').value,
+                id: memberId,
+                name: name,
                 title: document.getElementById('title').value || '无',
                 birthday: document.getElementById('birthday').value || '无',
                 deathday: document.getElementById('deathday').value || '无',
@@ -952,7 +977,7 @@
                 generation: parseInt(document.getElementById('generation').value) || 1,
                 fid: parseInt(document.getElementById('fid').value) || null,
                 pinyin: document.getElementById('pinyin').value || '无',
-                img: document.getElementById('img').value || generateAvatar(document.getElementById('name').value, parseInt(document.getElementById('member-id').value) || generateNewId()),
+                img: imgValue,
                 cids: []
             };
 
@@ -1079,18 +1104,20 @@
         // 删除成员
         function deleteMember(id) {
             if (confirm('确定要删除这个成员吗？')) {
+                const member = familyData.find(m => m.id === id);
+                
                 // 从父成员的cids中移除
-                familyData.forEach(member => {
-                    if (member.cids && member.cids.includes(id)) {
-                        member.cids = member.cids.filter(cid => cid !== id);
+                familyData.forEach(m => {
+                    if (m.cids && m.cids.includes(id)) {
+                        m.cids = m.cids.filter(cid => cid !== id);
                     }
                 });
                 
                 // 从数组中移除
                 familyData = familyData.filter(m => m.id !== id);
                 
-                // 重新渲染列表
-                renderMemberList();
+                // 重新应用过滤器，确保filteredData也更新
+                applyFilters();
             }
         }
 
@@ -1343,6 +1370,12 @@
                         
                         <label style="font-weight: bold;">头像路径:</label>
                         <input type="text" name="img" value="${member.img || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" placeholder="例如：img/avatars/1.png">
+                        
+                        <label style="font-weight: bold; display: none;" id="regenerate-avatar-label">生成新头像:</label>
+                        <label style="display: none; align-items: center; gap: 5px;" id="regenerate-avatar-checkbox">
+                            <input type="checkbox" name="regenerateAvatar" style="width: auto;">
+                            <span>如果姓名变化，重新生成头像</span>
+                        </label>
                     </div>
                     
                     <div style="margin-top: 10px;">
@@ -1368,9 +1401,14 @@
             // 当编辑时修改姓名，自动更新拼音
             const nameInput = form.querySelector('input[name="name"]');
             const pinyinInput = form.querySelector('input[name="pinyin"]');
+            const regenerateLabel = document.getElementById('regenerate-avatar-label');
+            const regenerateCheckbox = document.getElementById('regenerate-avatar-checkbox');
+            
             if (nameInput && pinyinInput) {
                 nameInput.addEventListener('input', function() {
                     const name = this.value;
+                    const oldName = member.name;
+                    
                     // 更新拼音
                     if (name) {
                         generatePinyin(name).then(pinyin => {
@@ -1378,6 +1416,15 @@
                         });
                     } else {
                         pinyinInput.value = '';
+                    }
+                    
+                    // 当姓名发生变化时显示"生成新头像"选项
+                    if (name !== oldName) {
+                        if (regenerateLabel) regenerateLabel.style.display = 'block';
+                        if (regenerateCheckbox) regenerateCheckbox.style.display = 'inline-flex';
+                    } else {
+                        if (regenerateLabel) regenerateLabel.style.display = 'none';
+                        if (regenerateCheckbox) regenerateCheckbox.style.display = 'none';
                     }
                 });
             }
@@ -1389,7 +1436,11 @@
             const member = familyData.find(m => m.id === id);
             if (!member) return;
 
-            member.name = formData.get('name');
+            const oldName = member.name;
+            const newName = formData.get('name');
+            const regenerateAvatar = formData.get('regenerateAvatar') === 'on';
+
+            member.name = newName;
             member.title = formData.get('title');
             member.birthday = formData.get('birthday');
             member.deathday = formData.get('deathday');
@@ -1398,7 +1449,15 @@
             member.generation = parseInt(formData.get('generation'));
             member.fid = parseInt(formData.get('fid')) || null;
             member.pinyin = formData.get('pinyin');
-            member.img = formData.get('img') || generateAvatar(member.name, member.id);
+            
+            // 处理头像
+            const imgInput = formData.get('img');
+            if (imgInput) {
+                member.img = imgInput;
+            } else if (regenerateAvatar && newName !== oldName) {
+                // 如果勾选了重新生成头像且姓名发生变化，则生成新头像
+                member.img = generateAvatar(newName, id);
+            }
 
             // 处理父子关系
             if (member.fid) {
@@ -1475,6 +1534,9 @@
                     }
                 });
                 
+                // 上传头像
+                await uploadAvatars(config);
+                
                 // 生成JSON字符串
                 const jsonStr = JSON.stringify(familyData, null, 2);
                 const content = btoa(unescape(encodeURIComponent(jsonStr)));
@@ -1511,13 +1573,171 @@
                 });
                 
                 if (putResponse.ok) {
-                    showNotification('已成功提交到GitHub！', 'success');
+                    // 同步到本地文件
+                    saveToLocalFile(jsonStr);
+                    showNotification('已成功提交到GitHub并同步到本地！', 'success');
                 } else {
                     throw new Error(`提交文件失败: ${putResponse.status}`);
                 }
             } catch (error) {
                 console.error('提交到GitHub失败:', error);
                 showNotification(`提交失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 保存到本地文件
+        function saveToLocalFile(jsonStr) {
+            // 创建Blob对象
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            
+            // 创建下载链接
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'new_family.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 上传头像
+        async function uploadAvatars(config) {
+            try {
+                showNotification('正在上传头像...', 'success');
+                
+                // 获取 GitHub 上现有的头像文件
+                const existingAvatars = await getExistingAvatars(config);
+                
+                for (const member of familyData) {
+                    // 只有当 img 是 DataURL 时才上传
+                    if (member.img && member.img.startsWith('data:image/')) {
+                        const avatarPath = `img/avatars/${member.id}.png`;
+                        const avatarUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${avatarPath}`;
+                        
+                        // 将 DataURL 转换为 Blob
+                        const response = await fetch(member.img);
+                        const blob = await response.blob();
+                        
+                        // 将 Blob 转换为 Base64
+                        const reader = new FileReader();
+                        const avatarBase64 = await new Promise((resolve) => {
+                            reader.onload = () => resolve(reader.result.split(',')[1]);
+                            reader.readAsDataURL(blob);
+                        });
+                        
+                        // 尝试获取文件，如果不存在则不需要 sha
+                        let sha = null;
+                        try {
+                            const getResponse = await fetch(avatarUrl, {
+                                headers: {
+                                    'Authorization': `token ${config.token}`,
+                                    'Accept': 'application/vnd.github.v3+json'
+                                }
+                            });
+                            if (getResponse.ok) {
+                                const fileData = await getResponse.json();
+                                sha = fileData.sha;
+                            }
+                        } catch (e) {
+                            // 文件不存在，忽略错误
+                        }
+                        
+                        // 上传图片
+                        const putResponse = await fetch(avatarUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `token ${config.token}`,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/vnd.github.v3+json'
+                            },
+                            body: JSON.stringify({
+                                message: `添加头像: ${member.name}`,
+                                content: avatarBase64,
+                                sha: sha
+                            })
+                        });
+                        
+                        if (putResponse.ok) {
+                            // 更新成员的 img 值为图片路径
+                            member.img = avatarPath;
+                        } else {
+                            console.error(`上传头像失败: ${member.name}`, putResponse.status);
+                        }
+                    }
+                }
+                
+                // 删除不再需要的头像
+                await deleteUnusedAvatars(config, existingAvatars);
+                
+                showNotification('头像上传完成', 'success');
+            } catch (error) {
+                console.error('上传头像失败:', error);
+                showNotification(`头像上传失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 获取 GitHub 上现有的头像文件
+        async function getExistingAvatars(config) {
+            try {
+                const avatarDirUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/img/avatars`;
+                const response = await fetch(avatarDirUrl, {
+                    headers: {
+                        'Authorization': `token ${config.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.map(file => ({
+                        name: file.name,
+                        path: file.path,
+                        sha: file.sha
+                    }));
+                }
+                return [];
+            } catch (error) {
+                console.error('获取现有头像失败:', error);
+                return [];
+            }
+        }
+
+        // 删除不再需要的头像
+        async function deleteUnusedAvatars(config, existingAvatars) {
+            try {
+                const currentMemberIds = new Set(familyData.map(m => m.id));
+                
+                for (const avatar of existingAvatars) {
+                    // 从文件名中提取 ID
+                    const id = parseInt(avatar.name.replace('.png', ''));
+                    
+                    // 如果该 ID 不在当前成员列表中，则删除该头像
+                    if (!currentMemberIds.has(id)) {
+                        const avatarUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${avatar.path}`;
+                        
+                        const deleteResponse = await fetch(avatarUrl, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `token ${config.token}`,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/vnd.github.v3+json'
+                            },
+                            body: JSON.stringify({
+                                message: `删除头像: ${avatar.name}`,
+                                sha: avatar.sha
+                            })
+                        });
+                        
+                        if (deleteResponse.ok) {
+                            console.log(`已删除头像: ${avatar.name}`);
+                        } else {
+                            console.error(`删除头像失败: ${avatar.name}`, deleteResponse.status);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('删除头像失败:', error);
             }
         }
 
